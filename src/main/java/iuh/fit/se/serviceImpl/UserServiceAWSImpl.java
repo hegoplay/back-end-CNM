@@ -100,4 +100,18 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 		return new LoginResponse(request.getPhone(),jwtUtils.generateTokenFromUsername(request.getPhone()));
 	}
 
+	@Override
+	public void updatePassword(String phone, String password) {
+		// TODO Auto-generated method stub
+		
+		User user = userRepository.findByPhone(phone);
+		if (user == null) {
+			throw new RuntimeException("User not found");
+		}
+		user.setPassword(passwordEncoder.encode(password));
+		user.setUpdatedAt(new java.util.Date().toString());
+		userRepository.save(user);
+		log.info("User password updated: {}", user);
+	}
+
 }

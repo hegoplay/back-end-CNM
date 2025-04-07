@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import iuh.fit.se.model.dto.ForgotPasswordRequest;
 import iuh.fit.se.model.dto.LoginRequest;
 import iuh.fit.se.model.dto.LoginResponse;
 import iuh.fit.se.model.dto.RegisterRequest;
@@ -109,5 +110,14 @@ public class AuthController {
 		response.put("success", true);
 		return ResponseEntity.ok(response);
 	}
+    
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, Boolean>> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+    	userService.updatePassword(request.getPhone(), request.getPassword());
+    	log.info("Update password: {}", request.getPhone());
+    	Map<String, Boolean> response = new HashMap<>();
+    	response.put("success", true);
+    	return ResponseEntity.ok(response);
+    }
     
 }
