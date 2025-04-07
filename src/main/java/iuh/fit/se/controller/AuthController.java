@@ -15,6 +15,7 @@ import iuh.fit.se.model.dto.LoginResponse;
 import iuh.fit.se.model.dto.RegisterRequest;
 import iuh.fit.se.model.dto.RegisterResponse;
 import iuh.fit.se.service.AwsService;
+import iuh.fit.se.service.UserService;
 import iuh.fit.se.util.JwtUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class AuthController {
 
     JwtUtils jwtUtils;
     AwsService awsService;
+    UserService userService;
     
 
     @PostMapping("/login")
@@ -67,13 +69,45 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
     
-//    @PostMapping("/register")
-//    public ResponseEntity<RegisterResponse> register(@ModelAttribute RegisterRequest request) throws Exception {
-//        String avatarUrl = awsService.uploadToS3(request.getAvatar());
-//        awsService.saveToDynamoDB(request, avatarUrl);
-//        RegisterResponse response = new RegisterResponse();
-//        response.setSuccess(true);
-//        response.setMessage("Đăng ký thành công");
-//        return ResponseEntity.ok(response);
-//    }
+    
+    @PostMapping("/check-phone")
+    public ResponseEntity<Map<String, Boolean>> checkPhone(@RequestBody Map<String, String> request) {
+		String phone = request.get("phone");
+		Map<String, Boolean> response = new HashMap<>();
+		boolean isExist = userService.isExistPhone(phone);
+		log.info("check phone: {}", isExist);
+		response.put("isExist", isExist);
+		return ResponseEntity.ok(response);
+	}
+    
+    @PostMapping("/register")
+    public ResponseEntity<RegisterResponse> register(@ModelAttribute RegisterRequest request) throws Exception {
+    	log.info(request.toString());
+        String avatarUrl = awsService.uploadToS3(request.getAvatar());
+        userService.createUser(request, avatarUrl);
+        RegisterResponse response = new RegisterResponse();
+        response.setSuccess(true);
+        response.setMessage("Đăng ký thành công");
+        return ResponseEntity.ok(response);
+    }
+    
+    @PostMapping("/login-with-password")
+    public ResponseEntity<LoginResponse> loginWithPassword(@RequestBody LoginRequest loginRequest) {
+//		String token = jwtUtils.generateTokenFromUsername(loginRequest.getPhone());
+    	LoginResponse loginResponse = userService.login(loginRequest);
+		if (loginResponse == null) {
+			return ResponseEntity.badRequest().body(null);
+		}
+		log.info("Login with password: {}", loginRequest.getPhone());
+		return ResponseEntity.ok(loginResponse);
+	}
+    
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, Boolean>> logout(@RequestBody Map<String, String> request) {
+		log.info("Logout: {}", request.get("phone"));
+		Map<String, Boolean> response = new HashMap<>();
+		response.put("success", true);
+		return ResponseEntity.ok(response);
+	}
+    
 }

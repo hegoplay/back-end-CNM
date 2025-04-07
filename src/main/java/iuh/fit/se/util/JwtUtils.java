@@ -1,14 +1,13 @@
 package iuh.fit.se.util;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
 import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Jwts;
@@ -22,6 +21,9 @@ public class JwtUtils {
 
     @Value("${jwt.expirationMs}")
     private int jwtExpirationMs;
+    
+    @Value("${jwt.expirationDay}")
+    private int jwtExpirationDay;
 
     
     
@@ -29,22 +31,40 @@ public class JwtUtils {
     public String generateTokenFromUsername(String username) {
 		// Tạo JWT token từ username
 		// Sử dụng thư viện io.jsonwebtoken để tạo token
+    	
+    	Instant now = Instant.now();
+        Instant expiry = now.plus(jwtExpirationDay, ChronoUnit.DAYS); // Khớp với maxAge cookie
+    	
     	SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
         return Jwts.builder()
             .subject(username)
+//            .setHeaderParam("typ", "JWT")
+            .issuer("iuh.fit.se")
             .issuedAt(new Date())
-            .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
+            .expiration(new Date((new Date()).getTime() + expiry.toEpochMilli()))
+            .subject(username)
             .signWith(key)
             .compact();
     }
 
-    // Các method validate token...
-    // Phương thức tạo Authentication từ JWT
-//    public Authentication getAuthentication(String jwt) {
-//        String username = getUsernameFromToken(jwt);
-//        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-//        return new UsernamePasswordAuthenticationToken(
-//            userDetails, null, userDetails.getAuthorities()
-//        );
-//    }
+    public String getUsernameFromToken(String token) {
+        return Jwts.parser()
+            .verifyWith(Keys.hmacShaKeyFor(jwtSecret.getBytes()))
+            .build()
+            .parseSignedClaims(token)
+            .getPayload()
+            .getSubject();
+    }
+    
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parser()
+                .verifyWith(Keys.hmacShaKeyFor(jwtSecret.getBytes()))
+                .build()
+                .parseSignedClaims(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }
