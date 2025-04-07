@@ -10,4 +10,6 @@ public interface UserService {
 	void createUser(RegisterRequest request, String avatarUrl);
 	
 	LoginResponse login(LoginRequest request);
+	
+	void updatePassword(String phone, String password);
 }
