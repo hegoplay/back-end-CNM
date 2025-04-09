@@ -1,19 +1,20 @@
 package iuh.fit.se.serviceImpl;
 
-import java.sql.Date;
+import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import iuh.fit.se.mapper.UserMapper;
 import iuh.fit.se.model.User;
-import iuh.fit.se.model.dto.LoginRequest;
-import iuh.fit.se.model.dto.LoginResponse;
+import iuh.fit.se.model.dto.UserResponseDto;
+import iuh.fit.se.model.dto.auth.LoginRequest;
+import iuh.fit.se.model.dto.auth.LoginResponse;
 import iuh.fit.se.repo.UserRepository;
 import iuh.fit.se.util.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 
@@ -45,7 +46,7 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 	}
 
 	@Override
-	public void createUser(iuh.fit.se.model.dto.RegisterRequest request, String avatarUrl) {
+	public void createUser(iuh.fit.se.model.dto.auth.RegisterRequest request, String avatarUrl) {
 
 		
 		log.info("register user: {}", request);
@@ -56,13 +57,13 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 				.phoneNumber(request.getPhone())
 				.password(passwordEncoder.encode(request.getPassword()).toString())
 				.baseImg(avatarUrl)
-				.gender(request.isGender())
+				.isMale(request.isGender())
 				.dateOfBirth(request.getDateOfBirth())
 				.name(request.getName())
 				.status("offline")
 				.isOnline(false)
-				.createdAt(new java.util.Date().toString())
-				.updatedAt(new java.util.Date().toString())
+				.createdAt(LocalDateTime.now())
+				.updatedAt(LocalDateTime.now())
 				.requestList(new java.util.ArrayList<>())
 				.friends(new java.util.ArrayList<>())
 				.pendings(new java.util.ArrayList<>())
@@ -92,8 +93,8 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 
 		user.setOnline(true);
 		user.setStatus("online");
-		user.setLastOnlineTime(new java.util.Date().toString());
-		user.setUpdatedAt(new java.util.Date().toString());
+		user.setLastOnlineTime(LocalDateTime.now());
+		user.setUpdatedAt(LocalDateTime.now());
 
 		userRepository.save(user);
 
@@ -109,9 +110,17 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 			throw new RuntimeException("User not found");
 		}
 		user.setPassword(passwordEncoder.encode(password));
-		user.setUpdatedAt(new java.util.Date().toString());
+		user.setUpdatedAt(LocalDateTime.now());
 		userRepository.save(user);
 		log.info("User password updated: {}", user);
+	}
+
+	@Override
+	public UserResponseDto getUserInfo(String phone) {
+		// TODO Auto-generated method stub
+		User user = userRepository.findByPhone(phone);
+		UserResponseDto dto = UserMapper.INSTANCE.toUserResponseDto(user);
+		return dto;
 	}
 
 }

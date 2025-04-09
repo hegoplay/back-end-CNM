@@ -8,6 +8,8 @@ JDK version require: 21
 - JWT_SECRET
 - AWS_ACCESS_KEY_ID
 - AWS_SECRET_ACCESS_KEY
+- FIREBASE_API_KEY (optional)
+- FIREBASE_PROJECT_ID (optional)
 
 ## DynamoDB table name
 - users

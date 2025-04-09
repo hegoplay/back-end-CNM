@@ -10,11 +10,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import iuh.fit.se.model.dto.ForgotPasswordRequest;
-import iuh.fit.se.model.dto.LoginRequest;
-import iuh.fit.se.model.dto.LoginResponse;
-import iuh.fit.se.model.dto.RegisterRequest;
-import iuh.fit.se.model.dto.RegisterResponse;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
+
+import iuh.fit.se.model.dto.auth.ForgotPasswordRequest;
+import iuh.fit.se.model.dto.auth.LoginRequest;
+import iuh.fit.se.model.dto.auth.LoginResponse;
+import iuh.fit.se.model.dto.auth.RegisterRequest;
+import iuh.fit.se.model.dto.auth.RegisterResponse;
+import iuh.fit.se.model.dto.auth.TokenRequest;
 import iuh.fit.se.service.AwsService;
 import iuh.fit.se.service.UserService;
 import iuh.fit.se.util.JwtUtils;
@@ -39,9 +44,9 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
-        String token = jwtUtils.generateTokenFromUsername(loginRequest.getPhone());
-        log.debug("Token: {}", token);
-        return ResponseEntity.ok(new LoginResponse(loginRequest.getPhone(), token));
+    	userService.login(loginRequest);
+//        String token = jwtUtils.generateTokenFromUsername(loginRequest.getPhone());
+        return ResponseEntity.ok(userService.login(loginRequest));
     }
     @PostMapping("/send-otp")
     public ResponseEntity<Map<String, Boolean>> sendOtp(@RequestBody LoginRequest request) {
@@ -54,12 +59,12 @@ public class AuthController {
     
     @PostMapping("/verify-otp")
     public ResponseEntity<Map<String, Object>> verifyOtp(@RequestBody Map<String, String> request) {
-    	log.info("verify otp: {}", request);
+//    	log.info("verify otp: {}", request);
         String phone = request.get("phone");
         String otp = request.get("otp");
         Map<String, Object> response = new HashMap<>();
         boolean verifyOtp = awsService.verifyOtp(phone, otp);
-        log.info("verify otp: {}", verifyOtp);
+//        log.info("verify otp: {}", verifyOtp);
         if (verifyOtp) {
         	response.put("success", true);
         	response.put("message", "veryfy otp success");
@@ -118,6 +123,19 @@ public class AuthController {
     	Map<String, Boolean> response = new HashMap<>();
     	response.put("success", true);
     	return ResponseEntity.ok(response);
+    }
+    
+    @PostMapping("/verify-token")
+    public ResponseEntity<String> verifyToken(@RequestBody TokenRequest tokenRequest) {
+        try {
+            // Xác minh token từ Firebase
+            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(tokenRequest.getToken());
+            String uid = decodedToken.getUid();
+//            log.info("PROVJP");
+            return ResponseEntity.ok("Xác thực thành công! UID: " + uid);
+        } catch (FirebaseAuthException e) {
+            return ResponseEntity.status(401).body("Xác thực thất bại: " + e.getMessage());
+        }
     }
     
 }
