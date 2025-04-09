@@ -1,5 +1,6 @@
 package iuh.fit.se.model;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -27,13 +28,13 @@ public class User {
 	String backgroundImg;
 	String name;
 	String bio;
-	boolean gender;
+	boolean isMale;
 	String dateOfBirth;
 	String status;
 	boolean isOnline;
-	String lastOnlineTime;
-	String createdAt;
-	String updatedAt;
+	LocalDateTime lastOnlineTime;
+	LocalDateTime createdAt;
+	LocalDateTime updatedAt;
 
 	// Relationships
 	List<String> requestList;

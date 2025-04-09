@@ -12,7 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import iuh.fit.se.model.dto.RegisterRequest;
+import iuh.fit.se.model.dto.auth.RegisterRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
@@ -22,6 +22,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.sns.SnsClient;
 import software.amazon.awssdk.services.sns.model.PublishRequest;
+import software.amazon.awssdk.services.sns.model.PublishResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -52,10 +53,17 @@ public class AwsService {
 
         
         // Lưu OTP vào bộ nhớ tạm thời
-        otpStore.put(phone, otp);
+//        otpStore.put(phone, otp);
         // Gửi OTP qua SNS
         
-//        snsClient.publish(request);
+        try{
+        	PublishResponse publish = snsClient.publish(request);
+        	log.info("Gửi OTP thành công, messageId: {}", publish);
+        }
+        catch (Exception e) {
+			log.error("Gửi OTP thất bại: {}", e.getMessage());
+		}
+        
         
         return otp; // Trả về OTP để lưu tạm (có thể dùng Redis hoặc in-memory)
     }

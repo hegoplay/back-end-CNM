@@ -1,4 +1,4 @@
-package iuh.fit.se.model.dto;
+package iuh.fit.se.model.dto.auth;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

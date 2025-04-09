@@ -1,4 +1,4 @@
-package iuh.fit.se.model.dto;
+package iuh.fit.se.model.dto.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
