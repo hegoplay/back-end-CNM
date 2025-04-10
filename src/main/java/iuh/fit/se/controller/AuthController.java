@@ -3,10 +3,13 @@ package iuh.fit.se.controller;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -42,21 +45,44 @@ public class AuthController {
     UserService userService;
     
 
+/**
+ *     
+ * @param loginRequest
+ * phone
+ * password
+ * @return
+ *  phone
+ *  token = jwt
+ */
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
-    	userService.login(loginRequest);
 //        String token = jwtUtils.generateTokenFromUsername(loginRequest.getPhone());
         return ResponseEntity.ok(userService.login(loginRequest));
     }
+    /**
+     * 
+     * @param request
+     * phone
+     * @return
+     * success or not
+     */
     @PostMapping("/send-otp")
-    public ResponseEntity<Map<String, Boolean>> sendOtp(@RequestBody LoginRequest request) {
+    public ResponseEntity<Map<String, Boolean>> sendOtp(@RequestBody String phone) {
 //        log.info("OTP sent: {}", request.getPhone());
         Map<String, Boolean> response = new HashMap<>();
-        awsService.sendOtp(request.getPhone());
+        awsService.sendOtp(phone);
         response.put("success", true);
         return ResponseEntity.ok(response);
     }
-    
+    /**
+     * 
+     * @param request
+     * phone
+     * otp
+     * @return
+     * success: true or false
+     * message: verify otp success or failed
+     */
     @PostMapping("/verify-otp")
     public ResponseEntity<Map<String, Object>> verifyOtp(@RequestBody Map<String, String> request) {
 //    	log.info("verify otp: {}", request);
@@ -75,13 +101,17 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
     
+/**
+ *     
+ * @param phone
+ * @return
+ * isExist
+ */
     
     @PostMapping("/check-phone")
-    public ResponseEntity<Map<String, Boolean>> checkPhone(@RequestBody Map<String, String> request) {
-		String phone = request.get("phone");
+    public ResponseEntity<Map<String, Boolean>> checkPhone(@RequestBody String phone) {
 		Map<String, Boolean> response = new HashMap<>();
 		boolean isExist = userService.isExistPhone(phone);
-		log.info("check phone: {}", isExist);
 		response.put("isExist", isExist);
 		return ResponseEntity.ok(response);
 	}
@@ -116,13 +146,34 @@ public class AuthController {
 		return ResponseEntity.ok(response);
 	}
     
-    @PostMapping("/forgot-password")
+    @PostMapping(path = {"/forgot-password"})
     public ResponseEntity<Map<String, Boolean>> forgotPassword(@RequestBody ForgotPasswordRequest request) {
     	userService.updatePassword(request.getPhone(), request.getPassword());
     	log.info("Update password: {}", request.getPhone());
     	Map<String, Boolean> response = new HashMap<>();
     	response.put("success", true);
     	return ResponseEntity.ok(response);
+    }
+    
+    @PostMapping("/change-password")
+    @PreAuthorize("isAuthenticated()") // Yêu cầu user phải đăng nhập
+    public ResponseEntity<Map<String, Boolean>> changePassword(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody ForgotPasswordRequest request) {
+        // Kiểm tra header cơ bản
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Missing or invalid Authorization header");
+        }
+
+        String jwt = authHeader.substring(7);
+        
+        // Gọi service
+        userService.changePassword(jwt, request.getPhone(), request.getPassword());
+        
+        // Trả về response thành công
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("success", true);
+        return ResponseEntity.ok(response);
     }
     
     @PostMapping("/verify-token")
@@ -137,5 +188,25 @@ public class AuthController {
             return ResponseEntity.status(401).body("Xác thực thất bại: " + e.getMessage());
         }
     }
+    
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, Object>> logout(@RequestHeader("Authorization") String authHeader) {
+    	// Kiểm tra header và loại bỏ prefix "Bearer " nếu có
+	    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+	        return ResponseEntity.status(HttpStatus.ACCEPTED).build(); // 401 nếu header không hợp lệ
+	    }
+
+	    // Lấy JWT bằng cách loại bỏ "Bearer " prefix
+	    String jwt = authHeader.substring(7);
+	    
+	    // Lấy phone từ token
+	    String phone = jwtUtils.getPhoneFromToken(jwt);
+	    userService.logout(phone);
+	    Map<String, Object> response = new HashMap<>();
+	    response.put("success", true);
+	    response.put("message", "Logout success");
+
+	    return ResponseEntity.ok(response); // 200 với data
+	}
     
 }

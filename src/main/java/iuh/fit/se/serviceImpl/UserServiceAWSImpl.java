@@ -6,14 +6,18 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import io.jsonwebtoken.JwtException;
 import iuh.fit.se.mapper.UserMapper;
 import iuh.fit.se.model.User;
 import iuh.fit.se.model.dto.UserResponseDto;
 import iuh.fit.se.model.dto.auth.LoginRequest;
 import iuh.fit.se.model.dto.auth.LoginResponse;
+import iuh.fit.se.model.dto.user.UserUpdateRequest;
 import iuh.fit.se.repo.UserRepository;
 import iuh.fit.se.util.JwtUtils;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
@@ -31,6 +35,7 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 	private final PasswordEncoder passwordEncoder;
 	private final UserRepository userRepository;
 	private final JwtUtils jwtUtils;
+	
 
 	@Override
 	public boolean isExistPhone(String phone) {
@@ -82,12 +87,10 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 //		return null;
 		User user = userRepository.findByPhone(request.getPhone());
 		if (user == null) {
-			log.error("User not found with phone: {}", request.getPhone());
 			return null;
 		}
 
 		if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-			log.error("Invalid password for phone: {}", request.getPhone());
 			return null;
 		}
 
@@ -98,7 +101,7 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 
 		userRepository.save(user);
 
-		return new LoginResponse(request.getPhone(),jwtUtils.generateTokenFromUsername(request.getPhone()));
+		return new LoginResponse(request.getPhone(),jwtUtils.generateTokenFromPhone(request.getPhone()));
 	}
 
 	@Override
@@ -122,5 +125,73 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 		UserResponseDto dto = UserMapper.INSTANCE.toUserResponseDto(user);
 		return dto;
 	}
+
+	@Override
+	public UserResponseDto updateUserInfo(String phone, UserUpdateRequest request) {
+		// TODO Auto-generated method stub
+		User user = userRepository.findByPhone(phone);
+		if (user == null) {
+			throw new RuntimeException("User not found");
+		}
+		User updatedUser = UserMapper.INSTANCE.fromUserUpdateRequestMapToUser(request, user);
+		log.info("User updated: {}", updatedUser);
+		updatedUser.setUpdatedAt(LocalDateTime.now());
+		userRepository.save(updatedUser);
+		UserResponseDto dto = UserMapper.INSTANCE.toUserResponseDto(updatedUser);
+		log.info("User response: {}", dto);
+		return dto;
+		
+		
+	}
+
+	@Override
+	public void updateUserStatus(String phone, String status) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void deleteUser(String phone) {
+		// TODO Auto-generated method stub
+		userRepository.deleteByPhone(phone);
+	}
+
+	@Override
+	public void logout(String phone) {
+		// TODO Auto-generated method stub
+		User user = userRepository.findByPhone(phone);
+		if (user != null) {
+			user.setOnline(false);
+			user.setStatus("offline");
+			user.setUpdatedAt(LocalDateTime.now());
+			userRepository.save(user);
+		}
+		else {
+			throw new RuntimeException("User not found");
+		}
+		
+	}
+
+	@Override
+	public void changePassword(String jwt, String phone, String password) {
+		// TODO Auto-generated method stub
+		String phoneFromToken;
+        try {
+            phoneFromToken = jwtUtils.getPhoneFromToken(jwt);
+        } catch (JwtException e) {
+            throw new RuntimeException("Invalid or expired token");
+        }
+
+        // Kiểm tra quyền
+        if (!phoneFromToken.equals(phoneFromToken)) {
+            throw new RuntimeException("You can only change your own password");
+        }
+
+        // Cập nhật mật khẩu
+        updatePassword(phoneFromToken, phone);
+        log.info("Password changed for: {}", phone);
+    }
+
+
 
 }

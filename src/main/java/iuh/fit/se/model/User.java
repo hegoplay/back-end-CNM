@@ -20,7 +20,6 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbParti
 @JsonSerialize
 @JsonDeserialize
 public class User {
-
 	String phoneNumber;
 	// Account info
 	String password;

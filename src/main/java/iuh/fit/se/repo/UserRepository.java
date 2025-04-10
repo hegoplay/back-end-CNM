@@ -10,4 +10,6 @@ public interface UserRepository {
 	
 	boolean existsByPhone(String phone);
 	
+	void deleteByPhone(String phone);
+	
 }

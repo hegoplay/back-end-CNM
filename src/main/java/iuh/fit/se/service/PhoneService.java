@@ -1,5 +1,6 @@
 package iuh.fit.se.service;
 
+@Deprecated
 public interface PhoneService {
 	boolean sendOtp(String phone);
 	

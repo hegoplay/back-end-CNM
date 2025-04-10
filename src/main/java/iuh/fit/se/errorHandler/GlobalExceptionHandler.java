@@ -55,4 +55,21 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<String> handleAuthenticationException() {
 		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Sai số điện thoại hoặc mật khẩu");
 	}
+	
+//	@ExceptionHandler(UnauthorizedException.class)
+//    public ResponseEntity<Map<String, Object>> handleUnauthorizedException(UnauthorizedException ex) {
+//        Map<String, Object> response = new HashMap<>();
+//        response.put("success", false);
+//        response.put("error", ex.getMessage());
+//        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+//    }
+//
+//    // Xử lý Forbidden (403)
+//    @ExceptionHandler(ForbiddenException.class)
+//    public ResponseEntity<Map<String, Object>> handleForbiddenException(ForbiddenException ex) {
+//        Map<String, Object> response = new HashMap<>();
+//        response.put("success", false);
+//        response.put("error", ex.getMessage());
+//        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+//    }
 }
