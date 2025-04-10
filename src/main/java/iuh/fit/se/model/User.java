@@ -1,5 +1,6 @@
 package iuh.fit.se.model;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class User {
 	String name;
 	String bio;
 	boolean isMale;
-	String dateOfBirth;
+	LocalDate dateOfBirth;
 	String status;
 	boolean isOnline;
 	LocalDateTime lastOnlineTime;

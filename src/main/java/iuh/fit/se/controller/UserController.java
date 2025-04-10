@@ -69,9 +69,9 @@ public class UserController {
 
 	}
 	@PutMapping("/{phone}")
-	public ResponseEntity<UserResponseDto> updateUserInfo(@PathVariable String jwt, @RequestBody UserUpdateRequest userInfo) {
+	public ResponseEntity<UserResponseDto> updateUserInfo(@RequestHeader("Authorization") String authHeader, @RequestBody UserUpdateRequest userInfo) {
 		
-		
+		String jwt = authHeader.substring(7);
 		String phone = jwtUtils.getPhoneFromToken(jwt);
 		UserResponseDto updatedUser = userService.updateUserInfo(phone, userInfo);
 

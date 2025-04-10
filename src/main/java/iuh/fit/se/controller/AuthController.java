@@ -44,6 +44,9 @@ public class AuthController {
     AwsService awsService;
     UserService userService;
     
+    private record PhoneObj (String phone){
+    	
+    }
 
 /**
  *     
@@ -67,10 +70,10 @@ public class AuthController {
      * success or not
      */
     @PostMapping("/send-otp")
-    public ResponseEntity<Map<String, Boolean>> sendOtp(@RequestBody String phone) {
+    public ResponseEntity<Map<String, Boolean>> sendOtp(@RequestBody PhoneObj phoneObj) {
 //        log.info("OTP sent: {}", request.getPhone());
         Map<String, Boolean> response = new HashMap<>();
-        awsService.sendOtp(phone);
+        awsService.sendOtp(phoneObj.phone);
         response.put("success", true);
         return ResponseEntity.ok(response);
     }
@@ -109,9 +112,9 @@ public class AuthController {
  */
     
     @PostMapping("/check-phone")
-    public ResponseEntity<Map<String, Boolean>> checkPhone(@RequestBody String phone) {
+    public ResponseEntity<Map<String, Boolean>> checkPhone(@RequestBody PhoneObj phoneObj) {
 		Map<String, Boolean> response = new HashMap<>();
-		boolean isExist = userService.isExistPhone(phone);
+		boolean isExist = userService.isExistPhone(phoneObj.phone);
 		response.put("isExist", isExist);
 		return ResponseEntity.ok(response);
 	}
