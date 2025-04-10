@@ -28,7 +28,7 @@ public class JwtUtils {
     
     
     
-    public String generateTokenFromUsername(String username) {
+    public String generateTokenFromPhone(String phone) {
 		// Tạo JWT token từ username
 		// Sử dụng thư viện io.jsonwebtoken để tạo token
     	
@@ -37,17 +37,16 @@ public class JwtUtils {
     	
     	SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
         return Jwts.builder()
-            .subject(username)
+            .subject(phone)
 //            .setHeaderParam("typ", "JWT")
             .issuer("iuh.fit.se")
             .issuedAt(new Date())
             .expiration(new Date((new Date()).getTime() + expiry.toEpochMilli()))
-            .subject(username)
             .signWith(key)
             .compact();
     }
 
-    public String getUsernameFromToken(String token) {
+    public String getPhoneFromToken(String token) {
         return Jwts.parser()
             .verifyWith(Keys.hmacShaKeyFor(jwtSecret.getBytes()))
             .build()

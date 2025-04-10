@@ -14,6 +14,8 @@ import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.DeleteItemRequest;
+import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
 import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
 
@@ -54,6 +56,21 @@ public class UserRepositoryDynamoDBImpl implements UserRepository {
 
 		// Nếu item tồn tại, map sẽ không rỗng
 		return !response.item().isEmpty();
+	}
+
+	@Override
+	public void deleteByPhone(String phone) {
+	    try {
+	        DeleteItemRequest deleteItemRequest = DeleteItemRequest.builder()
+	            .tableName("users")
+	            .key(Map.of("phoneNumber", AttributeValue.builder().s(phone).build()))
+	            .build();
+
+	        dynamoDbClient.deleteItem(deleteItemRequest);
+	    } catch (DynamoDbException e) {
+	        // Xử lý exception nếu cần
+	        throw new RuntimeException("Error deleting user with phone " + phone + ": " + e.getMessage());
+	    }
 	}
 
 }
