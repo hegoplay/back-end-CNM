@@ -14,6 +14,7 @@ import iuh.fit.se.model.dto.auth.LoginRequest;
 import iuh.fit.se.model.dto.auth.LoginResponse;
 import iuh.fit.se.model.dto.user.UserUpdateRequest;
 import iuh.fit.se.repo.UserRepository;
+import iuh.fit.se.service.AwsService;
 import iuh.fit.se.util.JwtUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,7 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 	private String region;
 
 	private final DynamoDbClient dynamoDbClient;
-//	private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
+	private final AwsService awsService;//	private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
 	private final PasswordEncoder passwordEncoder;
 	private final UserRepository userRepository;
 	private final JwtUtils jwtUtils;
@@ -134,8 +135,25 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 			throw new RuntimeException("User not found");
 		}
 		User updatedUser = UserMapper.INSTANCE.fromUserUpdateRequestMapToUser(request, user);
+		String backgroundImg = user.getBackgroundImg();
+		String baseImg = user.getBaseImg();
+		try {
+			if (request.backgroundImg() != null) {
+				
+				backgroundImg = awsService.uploadToS3(request.backgroundImg());
+			}
+			if (request.baseImg() != null) {
+				
+				baseImg = awsService.uploadToS3(request.baseImg());
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			throw new RuntimeException("upload fail");
+		}
 		log.info("User updated: {}", updatedUser);
 		updatedUser.setUpdatedAt(LocalDateTime.now());
+		updatedUser.setBackgroundImg(backgroundImg);
+		updatedUser.setBaseImg(baseImg);
 		userRepository.save(updatedUser);
 		UserResponseDto dto = UserMapper.INSTANCE.toUserResponseDto(updatedUser);
 		log.info("User response: {}", dto);

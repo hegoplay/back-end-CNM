@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -38,6 +39,7 @@ public class UserController {
 	
 	@PostMapping("/whoami")
 	public ResponseEntity<UserResponseDto> getWhoAmI(@RequestHeader("Authorization") String authHeader) {
+		
 	    // Kiểm tra header và loại bỏ prefix "Bearer " nếu có
 	    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
 	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // 401 nếu header không hợp lệ
@@ -68,9 +70,11 @@ public class UserController {
 		return ResponseEntity.ok(response); // Trả về 200 với data
 
 	}
-	@PutMapping("/{phone}")
-	public ResponseEntity<UserResponseDto> updateUserInfo(@RequestHeader("Authorization") String authHeader, @RequestBody UserUpdateRequest userInfo) {
-		
+//	Authorization chinh la jwt 
+//	@PutMapping("/")
+	@PutMapping("/")
+	public ResponseEntity<UserResponseDto> updateUserInfo(@RequestHeader("Authorization") String authHeader, @ModelAttribute UserUpdateRequest userInfo) {
+		log.info("JOINED");
 		String jwt = authHeader.substring(7);
 		String phone = jwtUtils.getPhoneFromToken(jwt);
 		UserResponseDto updatedUser = userService.updateUserInfo(phone, userInfo);
