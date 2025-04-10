@@ -138,14 +138,6 @@ public class AuthController {
 		return ResponseEntity.ok(loginResponse);
 	}
     
-    @PostMapping("/logout")
-    public ResponseEntity<Map<String, Boolean>> logout(@RequestBody Map<String, String> request) {
-		log.info("Logout: {}", request.get("phone"));
-		Map<String, Boolean> response = new HashMap<>();
-		response.put("success", true);
-		return ResponseEntity.ok(response);
-	}
-    
     @PostMapping(path = {"/forgot-password"})
     public ResponseEntity<Map<String, Boolean>> forgotPassword(@RequestBody ForgotPasswordRequest request) {
     	userService.updatePassword(request.getPhone(), request.getPassword());

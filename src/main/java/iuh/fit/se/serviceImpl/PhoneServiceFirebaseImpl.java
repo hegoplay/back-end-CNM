@@ -2,7 +2,7 @@ package iuh.fit.se.serviceImpl;
 
 import iuh.fit.se.service.PhoneService;
 
-@Deprecated
+
 public class PhoneServiceFirebaseImpl implements PhoneService {
 
 	@Override
