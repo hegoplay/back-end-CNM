@@ -54,6 +54,8 @@ public class AwsService {
         
         // Lưu OTP vào bộ nhớ tạm thời
         otpStore.put(phone, otp);
+        String storedOtp = otpStore.get(phone);
+        log.info("OTP đã lưu: {}", storedOtp);
         // Gửi OTP qua SNS
         
         try{
@@ -72,7 +74,7 @@ public class AwsService {
 		String storedOtp = otpStore.get(phone);
 		log.info("Xác thực OTP: {} cho số điện thoại: {}", otp, phone);
 		// Kiểm tra OTP
-		log.info("OTP đã lưu: {}", storedOtp);
+		log.info("OTP đã lưu: {}", otpStore);
 		
 		if (storedOtp != null && storedOtp.equals(otp)) {
 			otpStore.remove(phone); // Xóa OTP sau khi xác thực
@@ -101,26 +103,5 @@ public class AwsService {
         convFile.delete();
 
         return "https://dc7q18mlu9m5b.cloudfront.net/" + fileName;
-    }
-
-//     Lưu thông tin vào DynamoDB
-    public void saveToDynamoDB(RegisterRequest request, String avatarUrl) {
-        Map<String, AttributeValue> item = new HashMap<>();
-        item.put("_id", AttributeValue.builder().s(UUID.randomUUID().toString()).build());
-        item.put("phoneNumber", AttributeValue.builder().s(request.getPhone()).build());
-        item.put("name", AttributeValue.builder().s(request.getName()).build());
-        item.put("date_of_birth", AttributeValue.builder().s(request.getDateOfBirth()).build());
-        item.put("gender", AttributeValue.builder().bool(request.isGender()).build());
-        item.put("base_img", AttributeValue.builder().s(avatarUrl).build());
-        item.put("password", AttributeValue.builder().s(passwordEncoder.encode(request.getPassword())).build());
-
-        log.info("saveToDynamoDB: ",item);
-        
-        PutItemRequest putItemRequest = PutItemRequest.builder()
-                .tableName("users")
-                .item(item)
-                .build();
-
-        dynamoDbClient.putItem(putItemRequest);
     }
 }
