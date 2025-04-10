@@ -53,12 +53,12 @@ public class AwsService {
 
         
         // Lưu OTP vào bộ nhớ tạm thời
-//        otpStore.put(phone, otp);
+        otpStore.put(phone, otp);
         // Gửi OTP qua SNS
         
         try{
-        	PublishResponse publish = snsClient.publish(request);
-        	log.info("Gửi OTP thành công, messageId: {}", publish);
+//        	PublishResponse publish = snsClient.publish(request);
+//        	log.info("Gửi OTP thành công, messageId: {}", publish);
         }
         catch (Exception e) {
 			log.error("Gửi OTP thất bại: {}", e.getMessage());
