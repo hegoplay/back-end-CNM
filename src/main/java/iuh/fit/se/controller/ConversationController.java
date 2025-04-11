@@ -5,12 +5,11 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import iuh.fit.se.model.dto.ConversationDto;
 import iuh.fit.se.model.dto.UserResponseDto;
 import iuh.fit.se.service.ConversationService;
 import iuh.fit.se.service.UserService;
@@ -21,11 +20,11 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
-@RequestMapping("/api/friends")
+@RequestMapping("/api/conversations")
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @Slf4j
-public class FriendController {
+public class ConversationController {
 		
 	ConversationService conversationService;
 	JwtUtils jwtUtils;
@@ -35,29 +34,17 @@ public class FriendController {
 		
 	}
 	
-	@PostMapping("/accept")
-	public ResponseEntity<Void> addFriend(@RequestHeader("Authorization") String authHeader, @RequestBody PhoneObj friendPhone) {
-		// Kiểm tra header và loại bỏ prefix "Bearer " nếu có
-		String jwt = authHeader.substring(7);
-		
-		// Lấy phone từ token
-		String phone = jwtUtils.getPhoneFromToken(jwt);
-		
-		userService.acceptRequest(phone, friendPhone.phone);
-		conversationService.createFriendConversation(phone, friendPhone.phone);
-		
-		return ResponseEntity.ok().build();
-	}
-	
 	@GetMapping("/")
-	public ResponseEntity<List<UserResponseDto>> getFriends(@RequestHeader("Authorization") String authHeader) {
-
+	public ResponseEntity<List<ConversationDto>> getConversations(@RequestHeader("Authorization") String authHeader) {
 		// Lấy JWT bằng cách loại bỏ "Bearer " prefix
 		String jwt = authHeader.substring(7);
 		
 		// Lấy phone từ token
 		String phone = jwtUtils.getPhoneFromToken(jwt);
 		
-		return ResponseEntity.ok(userService.getFriends(phone));
+		List<ConversationDto> conversations = conversationService.getConversations(phone);
+		
+		return ResponseEntity.ok(conversations);
 	}
+	
 }
