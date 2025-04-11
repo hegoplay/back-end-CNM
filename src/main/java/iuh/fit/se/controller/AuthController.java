@@ -13,10 +13,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.auth.FirebaseToken;
-
 import iuh.fit.se.model.dto.auth.ForgotPasswordRequest;
 import iuh.fit.se.model.dto.auth.LoginRequest;
 import iuh.fit.se.model.dto.auth.LoginResponse;
@@ -169,19 +165,6 @@ public class AuthController {
         Map<String, Boolean> response = new HashMap<>();
         response.put("success", true);
         return ResponseEntity.ok(response);
-    }
-    
-    @PostMapping("/verify-token")
-    public ResponseEntity<String> verifyToken(@RequestBody TokenRequest tokenRequest) {
-        try {
-            // Xác minh token từ Firebase
-            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(tokenRequest.getToken());
-            String uid = decodedToken.getUid();
-//            log.info("PROVJP");
-            return ResponseEntity.ok("Xác thực thành công! UID: " + uid);
-        } catch (FirebaseAuthException e) {
-            return ResponseEntity.status(401).body("Xác thực thất bại: " + e.getMessage());
-        }
     }
     
     @PostMapping("/logout")
