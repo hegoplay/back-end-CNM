@@ -31,8 +31,12 @@ public class FriendController {
 	JwtUtils jwtUtils;
 	UserService userService;	
 	
+	private record PhoneObj (String phone){
+		
+	}
+	
 	@PostMapping("/accept")
-	public ResponseEntity<Void> addFriend(@RequestHeader("Authorization") String authHeader, @RequestBody String friendPhone) {
+	public ResponseEntity<Void> addFriend(@RequestHeader("Authorization") String authHeader, @RequestBody PhoneObj friendPhone) {
 		// Kiểm tra header và loại bỏ prefix "Bearer " nếu có
 		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // 401 nếu header không hợp lệ
@@ -44,8 +48,8 @@ public class FriendController {
 		// Lấy phone từ token
 		String phone = jwtUtils.getPhoneFromToken(jwt);
 		
-		conversationService.createFriendConversation(phone, friendPhone);
-		userService.acceptRequest(phone, friendPhone);
+		userService.acceptRequest(phone, friendPhone.phone);
+		conversationService.createFriendConversation(phone, friendPhone.phone);
 		
 		return ResponseEntity.ok().build();
 	}
