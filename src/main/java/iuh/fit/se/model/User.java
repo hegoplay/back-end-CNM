@@ -41,6 +41,7 @@ public class User {
 	List<String> friends;
 	List<String> pendings;
 	List<String> mutedConversation;
+	List<String> conversations;
 	String currentCallId; // nullable
 
 	// Call settings (nested object)

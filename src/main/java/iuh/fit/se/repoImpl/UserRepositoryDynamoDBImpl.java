@@ -1,5 +1,6 @@
 package iuh.fit.se.repoImpl;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Repository;
@@ -72,5 +73,6 @@ public class UserRepositoryDynamoDBImpl implements UserRepository {
 	        throw new RuntimeException("Error deleting user with phone " + phone + ": " + e.getMessage());
 	    }
 	}
+
 
 }

@@ -3,10 +3,12 @@ package iuh.fit.se.model;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import iuh.fit.se.model.converter.TypeConversationConverter;
 import lombok.Builder;
 import lombok.Data;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbConvertedBy;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 
 @DynamoDbBean
@@ -18,7 +20,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbParti
 public class Conversation {
 
     private String id;
-    private String type;
+    private ConversationType type;
     private List<String> participants;
     private String lastMessage;
     private LocalDateTime createdAt;
@@ -31,5 +33,10 @@ public class Conversation {
     @DynamoDbAttribute("id")
     public String getId() {
         return id;
+    }
+    @DynamoDbAttribute("type")
+    @DynamoDbConvertedBy(TypeConversationConverter.class)
+    public ConversationType getType() {
+        return type;
     }
 }

@@ -1,5 +1,7 @@
 package iuh.fit.se.controller;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -8,7 +10,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,10 +33,7 @@ public class UserController {
 	UserService userService;
 	JwtUtils jwtUtils;
 	
-	@GetMapping("/test")
-	public String test() {
-		return "test";
-	}
+	
 	
 	@PostMapping("/whoami")
 	public ResponseEntity<UserResponseDto> getWhoAmI(@RequestHeader("Authorization") String authHeader) {
@@ -71,7 +69,6 @@ public class UserController {
 
 	}
 //	Authorization chinh la jwt 
-//	@PutMapping("/")
 	@PutMapping("/")
 	public ResponseEntity<UserResponseDto> updateUserInfo(@RequestHeader("Authorization") String authHeader, @ModelAttribute UserUpdateRequest userInfo) {
 		log.info("JOINED");

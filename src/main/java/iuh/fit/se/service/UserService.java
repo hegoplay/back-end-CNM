@@ -1,5 +1,7 @@
 package iuh.fit.se.service;
 
+import java.util.List;
+
 import iuh.fit.se.model.dto.UserResponseDto;
 import iuh.fit.se.model.dto.auth.LoginRequest;
 import iuh.fit.se.model.dto.auth.LoginResponse;
@@ -26,4 +28,8 @@ public interface UserService {
 	void logout(String phone);
 	
 	void changePassword(String jwt, String phone, String password);
+	
+	List<UserResponseDto> getFriends(String phone);
+	
+	void acceptRequest(String phone, String friendPhone);
 }
