@@ -32,6 +32,8 @@ public class AwsService {
     @Value("${aws.region}")
     private String region;
 
+    private String bucketName = "zalas3bucket";
+    
     private final SnsClient snsClient;
     private final S3Client s3Client;
     private final DynamoDbClient dynamoDbClient;
@@ -86,7 +88,6 @@ public class AwsService {
     // Upload ảnh lên S3
     public String uploadToS3(MultipartFile file) throws Exception {
     	log.info("Upload file: {}", file.getOriginalFilename());
-        String bucketName = "zalas3bucket";
         String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
 
         File convFile = new File(System.getProperty("java.io.tmpdir") + "/" + fileName);
@@ -104,4 +105,9 @@ public class AwsService {
 
         return "https://dc7q18mlu9m5b.cloudfront.net/" + fileName;
     }
+    
+//    Xóa item trên s3s3
+    public void deleteFromS3(String fileName) {
+		s3Client.deleteObject(b -> b.bucket(bucketName).key(fileName));
+	}
 }
