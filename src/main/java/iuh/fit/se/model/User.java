@@ -1,6 +1,5 @@
 package iuh.fit.se.model;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -29,7 +28,7 @@ public class User {
 	String name;
 	String bio;
 	boolean isMale;
-	LocalDate dateOfBirth;
+	String dateOfBirth;
 	String status;
 	boolean isOnline;
 	LocalDateTime lastOnlineTime;
@@ -41,7 +40,6 @@ public class User {
 	List<String> friends;
 	List<String> pendings;
 	List<String> mutedConversation;
-	List<String> conversations;
 	String currentCallId; // nullable
 
 	// Call settings (nested object)

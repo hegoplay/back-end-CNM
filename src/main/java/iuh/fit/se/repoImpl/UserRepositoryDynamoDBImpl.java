@@ -1,6 +1,5 @@
 package iuh.fit.se.repoImpl;
 
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Repository;
@@ -32,6 +31,21 @@ public class UserRepositoryDynamoDBImpl implements UserRepository {
 	
 	@Override
     public User findByPhone(String phone) {
+		//linh thêm
+//		  phone = phone.trim().replaceAll("\\s+", "");
+//	    if (!phone.startsWith("+")) {
+//	        phone = "+" + phone;
+//	    }
+	    log.info("Checking if user exists with phone: {}", phone);
+
+	    boolean exists = existsByPhone(phone);
+	    if (!exists) {
+	        log.error("User with phone {} does not exist in the database", phone);
+	        return null;
+	    }
+		
+		
+		
         // Tạo key với partition key là phoneNumber
         Key key = Key.builder()
             .partitionValue(phone)
@@ -51,9 +65,12 @@ public class UserRepositoryDynamoDBImpl implements UserRepository {
 	public boolean existsByPhone(String phone) {
 		// TODO Auto-generated method stub
 		GetItemRequest getItemRequest = GetItemRequest.builder().tableName("users")
-				.key(Map.of("phoneNumber", AttributeValue.builder().s(phone).build())).build();
+				.key(Map.of("phoneNumber", AttributeValue.builder().s(phone).build())).consistentRead(true).build();
 
 		GetItemResponse response = dynamoDbClient.getItem(getItemRequest);
+		
+		///nhớ xoá
+		log.info("Checking phone number: '{}'", phone);
 
 		// Nếu item tồn tại, map sẽ không rỗng
 		return !response.item().isEmpty();
@@ -73,6 +90,5 @@ public class UserRepositoryDynamoDBImpl implements UserRepository {
 	        throw new RuntimeException("Error deleting user with phone " + phone + ": " + e.getMessage());
 	    }
 	}
-
 
 }

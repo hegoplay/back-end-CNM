@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import iuh.fit.se.model.Conversation;
+import iuh.fit.se.model.Notification;
 import iuh.fit.se.model.User;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -59,9 +60,14 @@ public class AwsConfig {
     DynamoDbTable<User> userTable(DynamoDbEnhancedClient enhancedClient) {
         return enhancedClient.table("users", TableSchema.fromBean(User.class));
     }
-	
 	@Bean
     DynamoDbTable<Conversation> conversationTable(DynamoDbEnhancedClient enhancedClient) {
         return enhancedClient.table("conversations", TableSchema.fromBean(Conversation.class));
     }
+
+    @Bean
+    DynamoDbTable<Notification> notificationTable(DynamoDbEnhancedClient enhancedClient) {
+        return enhancedClient.table("notifications", TableSchema.fromBean(Notification.class));
+    }
+	
 }

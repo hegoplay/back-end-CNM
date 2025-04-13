@@ -32,8 +32,6 @@ public class AwsService {
     @Value("${aws.region}")
     private String region;
 
-    private String bucketName = "zalas3bucket";
-    
     private final SnsClient snsClient;
     private final S3Client s3Client;
     private final DynamoDbClient dynamoDbClient;
@@ -56,8 +54,6 @@ public class AwsService {
         
         // Lưu OTP vào bộ nhớ tạm thời
         otpStore.put(phone, otp);
-        String storedOtp = otpStore.get(phone);
-        log.info("OTP đã lưu: {}", storedOtp);
         // Gửi OTP qua SNS
         
         try{
@@ -76,7 +72,7 @@ public class AwsService {
 		String storedOtp = otpStore.get(phone);
 		log.info("Xác thực OTP: {} cho số điện thoại: {}", otp, phone);
 		// Kiểm tra OTP
-		log.info("OTP đã lưu: {}", otpStore);
+		log.info("OTP đã lưu: {}", storedOtp);
 		
 		if (storedOtp != null && storedOtp.equals(otp)) {
 			otpStore.remove(phone); // Xóa OTP sau khi xác thực
@@ -88,6 +84,7 @@ public class AwsService {
     // Upload ảnh lên S3
     public String uploadToS3(MultipartFile file) throws Exception {
     	log.info("Upload file: {}", file.getOriginalFilename());
+        String bucketName = "zalas3bucket";
         String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
 
         File convFile = new File(System.getProperty("java.io.tmpdir") + "/" + fileName);
@@ -105,9 +102,25 @@ public class AwsService {
 
         return "https://dc7q18mlu9m5b.cloudfront.net/" + fileName;
     }
-    
-//    Xóa item trên s3s3
-    public void deleteFromS3(String fileName) {
-		s3Client.deleteObject(b -> b.bucket(bucketName).key(fileName));
-	}
+
+//     Lưu thông tin vào DynamoDB
+    public void saveToDynamoDB(RegisterRequest request, String avatarUrl) {
+        Map<String, AttributeValue> item = new HashMap<>();
+        item.put("_id", AttributeValue.builder().s(UUID.randomUUID().toString()).build());
+        item.put("phoneNumber", AttributeValue.builder().s(request.getPhone()).build());
+        item.put("name", AttributeValue.builder().s(request.getName()).build());
+        item.put("date_of_birth", AttributeValue.builder().s(request.getDateOfBirth()).build());
+        item.put("gender", AttributeValue.builder().bool(request.isGender()).build());
+        item.put("base_img", AttributeValue.builder().s(avatarUrl).build());
+        item.put("password", AttributeValue.builder().s(passwordEncoder.encode(request.getPassword())).build());
+
+        log.info("saveToDynamoDB: ",item);
+        
+        PutItemRequest putItemRequest = PutItemRequest.builder()
+                .tableName("users")
+                .item(item)
+                .build();
+
+        dynamoDbClient.putItem(putItemRequest);
+    }
 }
