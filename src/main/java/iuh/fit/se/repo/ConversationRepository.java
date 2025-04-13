@@ -11,5 +11,8 @@ public interface ConversationRepository {
 	
 	boolean existsById(String id);
 	
+	void updateLastUpdated(String conversationId);
 	
+	boolean existsByParticipantsContainingAndId(String userPhone, String conversationId);
+
 }
