@@ -7,8 +7,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import iuh.fit.se.config.AwsConfig;
 import iuh.fit.se.model.User;
-import iuh.fit.se.service.AwsService;
 import iuh.fit.se.service.UserService;
+import iuh.fit.se.serviceImpl.AwsService;
 import iuh.fit.se.util.JwtUtils;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;

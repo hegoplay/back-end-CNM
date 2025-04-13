@@ -1,13 +1,20 @@
 package iuh.fit.se.model;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import iuh.fit.se.model.converter.TypeConversationConverter;
+import iuh.fit.se.model.converter.TypeMessageConverter;
+import iuh.fit.se.model.enumObj.MessageType;
+import lombok.Builder;
 import lombok.Data;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbConvertedBy;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
 
 @Data
@@ -17,18 +24,18 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbParti
 @DynamoDbBean
 @JsonSerialize
 @JsonDeserialize
+@Builder
 public class Message {
     private String id;
     private String conversationId;
     private String senderId;
     private String content;
-    private String type; // "text" | "media" | "call-event"
+    private MessageType type; // "text" | "media" | "call-event"
     private String mediaUrl; // URL của media (ảnh, video, v.v.)
     private List<String> seenBy; // Danh sách user đã xem
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
     private boolean isRecalled; // Tin nhắn có bị thu hồi không
     private String replyTo; // Tin nhắn mà tin nhắn này trả lời (nullable)
-    private String sendTime; // Thời gian gửi (có thể lưu dạng string)
     private List<Reaction> reactions; // Danh sách phản ứng
     private CallEvent callEvent; // Dữ liệu sự kiện cuộc gọi (nếu type là "call-event")
 
@@ -53,6 +60,7 @@ public class Message {
 	@JsonSerialize
 	@JsonDeserialize
     public static class CallEvent {
+    	private String callId; // ID của cuộc gọi
         private String action; // "started" | "ended" | "missed"
         private int duration; // Thời lượng cuộc gọi (tính bằng giây)
     }
@@ -61,4 +69,10 @@ public class Message {
 	public String getId() {
 		return id;
 	}
+    
+    @DynamoDbAttribute("type")
+    @DynamoDbConvertedBy(TypeMessageConverter.class)
+    public MessageType getType() {
+        return type;
+    }
 }

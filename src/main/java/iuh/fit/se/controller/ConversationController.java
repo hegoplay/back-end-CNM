@@ -5,13 +5,16 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import iuh.fit.se.model.dto.ConversationDto;
-import iuh.fit.se.model.dto.UserResponseDto;
+import iuh.fit.se.model.dto.conversation.ConversationDetailDto;
+import iuh.fit.se.model.dto.conversation.ConversationDto;
 import iuh.fit.se.service.ConversationService;
+import iuh.fit.se.service.MessageNotifier;
+import iuh.fit.se.service.MessageService;
 import iuh.fit.se.service.UserService;
 import iuh.fit.se.util.JwtUtils;
 import lombok.AccessLevel;
@@ -27,12 +30,10 @@ import lombok.extern.slf4j.Slf4j;
 public class ConversationController {
 		
 	ConversationService conversationService;
+	MessageNotifier messageNotifier;
 	JwtUtils jwtUtils;
 	UserService userService;	
 	
-	private record PhoneObj (String phone){
-		
-	}
 	
 	@GetMapping("/")
 	public ResponseEntity<List<ConversationDto>> getConversations(@RequestHeader("Authorization") String authHeader) {
@@ -47,4 +48,22 @@ public class ConversationController {
 		return ResponseEntity.ok(conversations);
 	}
 	
+	@GetMapping("/{conversationId}")
+	public ResponseEntity<ConversationDetailDto> getConversationDetail(@PathVariable String conversationId){
+//		code di copilot
+		ConversationDetailDto conversation = conversationService.getConversationDetail(conversationId);
+		if (conversation == null) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+		}
+		return ResponseEntity.ok(conversation);
+	}
+	@GetMapping("/initialize/{conversationId}")
+	public ResponseEntity<Void> markNotificationAsRead(@PathVariable String conversationId, @RequestHeader("Authorization") String authHeader) {
+		log.info("Marking notification as read for conversation: {}", conversationId);
+		String jwt = authHeader.substring(7);
+		String phone = jwtUtils.getPhoneFromToken(jwt);
+		ConversationDetailDto conversation = conversationService.getConversationDetail(conversationId);
+		messageNotifier.initConversation(conversation, phone);
+		return ResponseEntity.ok().build();
+	}
 }

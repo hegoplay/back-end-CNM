@@ -15,7 +15,6 @@ import iuh.fit.se.model.dto.auth.LoginRequest;
 import iuh.fit.se.model.dto.auth.LoginResponse;
 import iuh.fit.se.model.dto.user.UserUpdateRequest;
 import iuh.fit.se.repo.UserRepository;
-import iuh.fit.se.service.AwsService;
 import iuh.fit.se.util.JwtUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

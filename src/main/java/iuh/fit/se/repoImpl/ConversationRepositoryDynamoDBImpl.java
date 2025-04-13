@@ -1,5 +1,7 @@
 package iuh.fit.se.repoImpl;
 
+import java.time.LocalDateTime;
+
 import org.springframework.stereotype.Repository;
 
 import iuh.fit.se.model.Conversation;
@@ -25,11 +27,11 @@ public class ConversationRepositoryDynamoDBImpl implements iuh.fit.se.repo.Conve
                     .build();
             Conversation conversation = conversationTable.getItem(key);
             if (conversation == null) {
-                log.warn("Conversation with id {} not found", id);
+                log.info("Conversation with id {} not found", id);
             }
             return conversation;
         } catch (Exception e) {
-            log.error("Error finding conversation with id {}: {}", id, e.getMessage());
+            log.info("Error finding conversation with id {}: {}", id, e.getMessage());
             throw new RuntimeException("Failed to find conversation", e);
         }
     }
@@ -77,5 +79,49 @@ public class ConversationRepositoryDynamoDBImpl implements iuh.fit.se.repo.Conve
             throw new RuntimeException("Failed to check conversation existence", e);
         }
     }
+
+    @Override
+    public void updateLastUpdated(String conversationId) {
+        log.info("Updating lastUpdated for conversation: {}", conversationId);
+        try {
+            // 1. Lấy conversation hiện tại
+            Key key = Key.builder()
+                    .partitionValue(conversationId)
+                    .build();
+            Conversation conversation = conversationTable.getItem(key);
+            
+            if (conversation == null) {
+                log.warn("Conversation not found with id: {}", conversationId);
+                throw new RuntimeException("Conversation not found");
+            }
+            
+            // 2. Cập nhật thời gian
+            conversation.setUpdatedAt(LocalDateTime.now());
+            
+            // 3. Lưu lại vào DynamoDB
+            conversationTable.updateItem(conversation);
+            log.debug("Successfully updated lastUpdated for conversation: {}", conversationId);
+            
+        } catch (Exception e) {
+            log.error("Failed to update lastUpdated for conversation {}: {}", conversationId, e.getMessage());
+            throw new RuntimeException("Failed to update conversation timestamp", e);
+        }
+    }
+
+	@Override
+	public boolean existsByParticipantsContainingAndId(String userPhone, String conversationId) {
+		// TODO Auto-generated method stub
+		Conversation conversation = findById(conversationId);
+		if (conversation != null) {
+			if (conversation.getParticipants() != null && conversation.getParticipants().contains(userPhone)) {
+				return true;
+			} else {
+				log.warn("User {} is not a participant in conversation {}", userPhone, conversationId);
+			}
+		} else {
+			log.warn("Conversation with id {} not found", conversationId);
+		}
+		return false;
+	}
 	
 }

@@ -1,4 +1,4 @@
-package iuh.fit.se.model;
+package iuh.fit.se.model.enumObj;
 
 public enum ConversationType {
     PRIVATE("private"),
