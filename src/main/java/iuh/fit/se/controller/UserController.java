@@ -1,15 +1,13 @@
 package iuh.fit.se.controller;
 
-import java.util.List;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,11 +31,13 @@ public class UserController {
 	UserService userService;
 	JwtUtils jwtUtils;
 	
-	
+	@GetMapping("/test")
+	public String test() {
+		return "test";
+	}
 	
 	@PostMapping("/whoami")
 	public ResponseEntity<UserResponseDto> getWhoAmI(@RequestHeader("Authorization") String authHeader) {
-		
 	    // Kiểm tra header và loại bỏ prefix "Bearer " nếu có
 	    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
 	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // 401 nếu header không hợp lệ
@@ -68,11 +68,10 @@ public class UserController {
 		return ResponseEntity.ok(response); // Trả về 200 với data
 
 	}
-//	Authorization chinh la jwt 
-	@PutMapping("/")
-	public ResponseEntity<UserResponseDto> updateUserInfo(@RequestHeader("Authorization") String authHeader, @ModelAttribute UserUpdateRequest userInfo) {
-		log.info("JOINED");
-		String jwt = authHeader.substring(7);
+	@PutMapping("/{phone}")
+	public ResponseEntity<UserResponseDto> updateUserInfo(@PathVariable String jwt, @RequestBody UserUpdateRequest userInfo) {
+		
+		
 		String phone = jwtUtils.getPhoneFromToken(jwt);
 		UserResponseDto updatedUser = userService.updateUserInfo(phone, userInfo);
 

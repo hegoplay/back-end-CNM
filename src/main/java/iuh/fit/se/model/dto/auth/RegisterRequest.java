@@ -1,7 +1,5 @@
 package iuh.fit.se.model.dto.auth;
 
-import java.time.LocalDate;
-
 import org.springframework.web.multipart.MultipartFile;
 
 import lombok.AccessLevel;
@@ -14,7 +12,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RegisterRequest {
 	String name;
-	LocalDate dateOfBirth;
+	String dateOfBirth;
 	MultipartFile avatar;
 	String phone;
 	String password;

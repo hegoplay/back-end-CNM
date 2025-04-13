@@ -28,23 +28,66 @@ public class JwtUtils {
     
     
     
+//    public String generateTokenFromPhone(String phone) {
+//		// Tạo JWT token từ username
+//		// Sử dụng thư viện io.jsonwebtoken để tạo token
+//    	
+//    	Instant now = Instant.now();
+//        Instant expiry = now.plus(jwtExpirationDay, ChronoUnit.DAYS); // Khớp với maxAge cookie
+//    	
+//    	SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+//        return Jwts.builder()
+//            .subject(phone)
+////            .setHeaderParam("typ", "JWT")
+//            .issuer("iuh.fit.se")
+//            .issuedAt(new Date())
+//            .expiration(new Date((new Date()).getTime() + expiry.toEpochMilli()))
+//            .signWith(key)
+//            .compact();
+//    }
+//    public String generateTokenFromPhone(String phone) {
+//        // Tạo JWT token từ phone
+//    	  if (!phone.startsWith("+")) {
+//    		  phone = "+" + phone;
+//    	    }
+//        // Loại bỏ khoảng trắng và dấu xuống dòng từ phone trước khi tạo token
+//        String cleanPhone = phone.trim().replace("\n", "");
+//
+//        Instant now = Instant.now();
+//        Instant expiry = now.plus(jwtExpirationDay, ChronoUnit.DAYS); // Khớp với maxAge cookie
+//
+//        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+//        return Jwts.builder()
+//            .subject(cleanPhone) // Dùng cleanPhone đã được loại bỏ khoảng trắng và \n
+//            .issuer("iuh.fit.se")
+//            .issuedAt(new Date())
+//            .expiration(new Date((new Date()).getTime() + expiry.toEpochMilli()))
+//            .signWith(key)
+//            .compact();
+//    }
+    
     public String generateTokenFromPhone(String phone) {
-		// Tạo JWT token từ username
-		// Sử dụng thư viện io.jsonwebtoken để tạo token
-    	
-    	Instant now = Instant.now();
-        Instant expiry = now.plus(jwtExpirationDay, ChronoUnit.DAYS); // Khớp với maxAge cookie
-    	
-    	SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        // Xóa toàn bộ khoảng trắng và ký tự xuống dòng
+        String cleanPhone = phone.replaceAll("\\s+", "");
+
+        if (!cleanPhone.startsWith("+")) {
+            cleanPhone = "+" + cleanPhone;
+        }
+
+        Instant now = Instant.now();
+        Instant expiry = now.plus(jwtExpirationDay, ChronoUnit.DAYS);
+
+        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
         return Jwts.builder()
-            .subject(phone)
-//            .setHeaderParam("typ", "JWT")
-            .issuer("iuh.fit.se")
-            .issuedAt(new Date())
-            .expiration(new Date((new Date()).getTime() + expiry.toEpochMilli()))
-            .signWith(key)
-            .compact();
+                .subject(cleanPhone) // Số điện thoại sạch, đã có dấu +
+                .issuer("iuh.fit.se")
+                .issuedAt(new Date())
+                .expiration(new Date((new Date()).getTime() + expiry.toEpochMilli()))
+                .signWith(key)
+                .compact();
     }
+
+
 
     public String getPhoneFromToken(String token) {
         return Jwts.parser()

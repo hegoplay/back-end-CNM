@@ -13,11 +13,17 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
+
 import iuh.fit.se.model.dto.auth.ForgotPasswordRequest;
 import iuh.fit.se.model.dto.auth.LoginRequest;
 import iuh.fit.se.model.dto.auth.LoginResponse;
+import iuh.fit.se.model.dto.auth.PhoneRequest;
 import iuh.fit.se.model.dto.auth.RegisterRequest;
 import iuh.fit.se.model.dto.auth.RegisterResponse;
+import iuh.fit.se.model.dto.auth.TokenRequest;
 import iuh.fit.se.service.AwsService;
 import iuh.fit.se.service.UserService;
 import iuh.fit.se.util.JwtUtils;
@@ -39,9 +45,6 @@ public class AuthController {
     AwsService awsService;
     UserService userService;
     
-    private record PhoneObj (String phone){
-    	
-    }
 
 /**
  *     
@@ -65,10 +68,10 @@ public class AuthController {
      * success or not
      */
     @PostMapping("/send-otp")
-    public ResponseEntity<Map<String, Boolean>> sendOtp(@RequestBody PhoneObj phoneObj) {
+    public ResponseEntity<Map<String, Boolean>> sendOtp(@RequestBody String phone) {
 //        log.info("OTP sent: {}", request.getPhone());
         Map<String, Boolean> response = new HashMap<>();
-        awsService.sendOtp(phoneObj.phone);
+        awsService.sendOtp(phone);
         response.put("success", true);
         return ResponseEntity.ok(response);
     }
@@ -106,13 +109,20 @@ public class AuthController {
  * isExist
  */
     
+//    @PostMapping("/check-phone")
+//    public ResponseEntity<Map<String, Boolean>> checkPhone(@RequestBody String phone) {
+//		Map<String, Boolean> response = new HashMap<>();
+//		boolean isExist = userService.isExistPhone(phone);
+//		response.put("isExist", isExist);
+//		return ResponseEntity.ok(response);
+//	}
+
     @PostMapping("/check-phone")
-    public ResponseEntity<Map<String, Boolean>> checkPhone(@RequestBody PhoneObj phoneObj) {
-		Map<String, Boolean> response = new HashMap<>();
-		boolean isExist = userService.isExistPhone(phoneObj.phone);
-		response.put("isExist", isExist);
-		return ResponseEntity.ok(response);
-	}
+    public ResponseEntity<Map<String, Boolean>> checkPhone(@RequestBody PhoneRequest request) {
+        String cleanPhone = request.getPhone().replace("\"", "").trim();
+        boolean exists = userService.isExistPhone(cleanPhone);
+        return ResponseEntity.ok(Map.of("isExist", exists));
+    }
     
     @PostMapping("/register")
     public ResponseEntity<RegisterResponse> register(@ModelAttribute RegisterRequest request) throws Exception {
@@ -164,6 +174,19 @@ public class AuthController {
         Map<String, Boolean> response = new HashMap<>();
         response.put("success", true);
         return ResponseEntity.ok(response);
+    }
+    
+    @PostMapping("/verify-token")
+    public ResponseEntity<String> verifyToken(@RequestBody TokenRequest tokenRequest) {
+        try {
+            // Xác minh token từ Firebase
+            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(tokenRequest.getToken());
+            String uid = decodedToken.getUid();
+//            log.info("PROVJP");
+            return ResponseEntity.ok("Xác thực thành công! UID: " + uid);
+        } catch (FirebaseAuthException e) {
+            return ResponseEntity.status(401).body("Xác thực thất bại: " + e.getMessage());
+        }
     }
     
     @PostMapping("/logout")

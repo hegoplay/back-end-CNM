@@ -19,7 +19,5 @@ public interface UserMapper {
 	UserResponseDto toUserResponseDto(User user);
 	
 	@Mapping(target = "male", source = "isMale")  // Rõ ràng mapping boolean
-	@Mapping(target = "backgroundImg", ignore = true) // 👉 ignore ở đây
-	@Mapping(target = "baseImg", ignore = true) // 👉 ignore ở đây
 	User fromUserUpdateRequestMapToUser(UserUpdateRequest userRequest, @MappingTarget User user);
 }
