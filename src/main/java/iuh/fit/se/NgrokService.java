@@ -16,7 +16,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
-@Service
+//@Service
 @Slf4j
 public class NgrokService {
 
