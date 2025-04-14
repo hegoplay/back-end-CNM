@@ -29,65 +29,68 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class UserController {
 
-	UserService userService;
-	JwtUtils jwtUtils;
-	
-	@GetMapping("/test")
-	public String test() {
-		return "test";
-	}
-	
-	@PostMapping("/whoami")
-	public ResponseEntity<UserResponseDto> getWhoAmI(@RequestHeader("Authorization") String authHeader) {
-		
-	    // Kiểm tra header và loại bỏ prefix "Bearer " nếu có
-	    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // 401 nếu header không hợp lệ
-	    }
+    UserService userService;
+    JwtUtils jwtUtils;
 
-	    // Lấy JWT bằng cách loại bỏ "Bearer " prefix
-	    String jwt = authHeader.substring(7);
-	    
-	    // Lấy phone từ token
-	    String phone = jwtUtils.getPhoneFromToken(jwt);
-	    UserResponseDto response = userService.getUserInfo(phone);
+    @GetMapping("/test")
+    public String test() {
+        return "test";
+    }
 
-	    if (response == null) {
-	        return ResponseEntity.notFound().build(); // 404 nếu không tìm thấy
-	    }
+    @PostMapping("/whoami")
+    public ResponseEntity<UserResponseDto> getWhoAmI(@RequestHeader("Authorization") String authHeader) {
+        log.info(authHeader);
+        // Kiểm tra header và loại bỏ prefix "Bearer " nếu có
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // 401 nếu header không hợp lệ
+        }
 
-	    return ResponseEntity.ok(response); // 200 với data
-	}
+        // Lấy JWT bằng cách loại bỏ "Bearer " prefix
+        String jwt = authHeader.substring(7);
 
-	@GetMapping("/{phone}")
-	public ResponseEntity<UserResponseDto> getUserInfo(@PathVariable String phone) {
-		UserResponseDto response = userService.getUserInfo(phone);
+        // Lấy phone từ token
+        String phone = jwtUtils.getPhoneFromToken(jwt);
+        UserResponseDto response = userService.getUserInfo(phone);
 
-		if (response == null) {
-			return ResponseEntity.notFound().build(); // Trả về 404 nếu không tìm thấy
-		}
+        if (response == null) {
+            return ResponseEntity.notFound().build(); // 404 nếu không tìm thấy
+        }
 
-		return ResponseEntity.ok(response); // Trả về 200 với data
+        return ResponseEntity.ok(response); // 200 với data
+    }
 
-	}
-//	Authorization chinh la jwt 
+    @GetMapping("/{phone}")
+    public ResponseEntity<UserResponseDto> getUserInfo(@PathVariable String phone) {
+        UserResponseDto response = userService.getUserInfo(phone);
+
+        if (response == null) {
+            return ResponseEntity.notFound().build(); // Trả về 404 nếu không tìm thấy
+        }
+
+        return ResponseEntity.ok(response); // Trả về 200 với data
+
+    }
+    //	Authorization chinh la jwt
 //	@PutMapping("/")
-	@PutMapping("/")
-	public ResponseEntity<UserResponseDto> updateUserInfo(@RequestHeader("Authorization") String authHeader, @ModelAttribute UserUpdateRequest userInfo) {
-		log.info("JOINED");
-		String jwt = authHeader.substring(7);
-		String phone = jwtUtils.getPhoneFromToken(jwt);
-		UserResponseDto updatedUser = userService.updateUserInfo(phone, userInfo);
+    @PutMapping("/")
+    public ResponseEntity<UserResponseDto> updateUserInfo(@RequestHeader("Authorization") String authHeader, @ModelAttribute UserUpdateRequest userInfo) {
+        log.info("JOINED");
+        String jwt = authHeader.substring(7);
+        String phone = jwtUtils.getPhoneFromToken(jwt);
+        UserResponseDto updatedUser = userService.updateUserInfo(phone, userInfo);
 
-		if (updatedUser == null) {
-			return ResponseEntity.notFound().build(); // Trả về 404 nếu không tìm thấy
-		}
+        if (updatedUser == null) {
+            return ResponseEntity.notFound().build(); // Trả về 404 nếu không tìm thấy
+        }
 
-		return ResponseEntity.ok(updatedUser); // Trả về 200 với data
-	}
-	@DeleteMapping("/{phone}")
-	public ResponseEntity<Void> deleteUser(@PathVariable String phone) {
-		userService.deleteUser(phone);
-		return ResponseEntity.noContent().build(); // Trả về 204 No Content
-	}
+        return ResponseEntity.ok(updatedUser); // Trả về 200 với data
+    }
+    @DeleteMapping("/{phone}")
+    public ResponseEntity<Void> deleteUser(@PathVariable String phone) {
+        userService.deleteUser(phone);
+        return ResponseEntity.noContent().build(); // Trả về 204 No Content
+    }
+
+//
+
 }
