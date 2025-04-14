@@ -41,7 +41,8 @@ public class SocketIONotifier implements MessageNotifier {
             .sendEvent("reaction_added", Map.of(
                 "messageId", messageId,
                 "emoji", emoji,
-                "userId", userId
+                "userId", userId,
+                "conversationId", conversationId
             ));
     }
 
