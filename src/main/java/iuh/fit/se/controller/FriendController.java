@@ -70,12 +70,13 @@ public class FriendController {
     public ResponseEntity<Map<String, Object>> tryToSearch(
             @RequestHeader("Authorization") String authHeader,
             @RequestBody Map<String, Object> requestBody) {
-
+//        {
+//            anything
+//        }
         log.info("Auth Header: {}", authHeader);
         log.info("Received request body: {}", requestBody);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
         response.put("message", "Search successful!");
         response.put("data", requestBody);
 
@@ -93,11 +94,14 @@ public class FriendController {
         return ResponseEntity.ok(response);
     }
 
+
     @PostMapping("/find-person-by-phone")
     public ResponseEntity<List<UserResponseDto>> findPersonsByPhone(
             @RequestHeader("Authorization") String authHeader,
             @RequestBody Map<String, String> request) {
-
+//    {
+//        "phone" : "+9999999999"
+//    }
         String phone = request.get("phone");
         log.info("Finding users with phone: {}", phone);
 
@@ -125,7 +129,9 @@ public class FriendController {
     public ResponseEntity<List<UserResponseDto>> findFriendsByNameKeyword(
             @RequestHeader("Authorization") String authHeader,
             @RequestBody Map<String, String> request){
-
+//        {
+//            "nameKeyword" : "Manh"
+//        }
         String jwt = authHeader.substring(7);
         String userPhone = jwtUtils.getPhoneFromToken(jwt);
 
