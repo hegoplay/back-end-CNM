@@ -29,55 +29,52 @@ import software.amazon.awssdk.services.sns.model.PublishResponse;
 @Slf4j
 public class AwsService {
 
-    @Value("${aws.region}")
-    private String region;
+	@Value("${aws.region}")
+	private String region;
 
-    private String bucketName = "zalas3bucket";
-    
-    private final SnsClient snsClient;
-    private final S3Client s3Client;
-    private final DynamoDbClient dynamoDbClient;
-    private final PasswordEncoder passwordEncoder;
+	@Value("${cloudfront.url}")
+	private String cloudFrontUrl;
 
-    private Map<String, String> otpStore = new HashMap<>(); // Lưu OTP tạm thời
-    
-    // Tạo và gửi OTP qua SNS
-    public String sendOtp(String phone) {
-        String otp = String.format("%06d", new Random().nextInt(999999));
-        String message = "Mã OTP của bạn là: " + otp;
-        
-        log.info("Gửi OTP: {} đến số điện thoại: {}", otp, phone);
-        
-        PublishRequest request = PublishRequest.builder()
-                .phoneNumber(phone)
-                .message(message)
-                .build();
+	private String bucketName = "zalas3bucket";
 
-        
-        // Lưu OTP vào bộ nhớ tạm thời
-        otpStore.put(phone, otp);
-        String storedOtp = otpStore.get(phone);
-        log.info("OTP đã lưu: {}", storedOtp);
-        // Gửi OTP qua SNS
-        
-        try{
+	private final SnsClient snsClient;
+	private final S3Client s3Client;
+	private final DynamoDbClient dynamoDbClient;
+	private final PasswordEncoder passwordEncoder;
+
+	private Map<String, String> otpStore = new HashMap<>(); // Lưu OTP tạm thời
+
+	// Tạo và gửi OTP qua SNS
+	public String sendOtp(String phone) {
+		String otp = String.format("%06d", new Random().nextInt(999999));
+		String message = "Mã OTP của bạn là: " + otp;
+
+		log.info("Gửi OTP: {} đến số điện thoại: {}", otp, phone);
+
+		PublishRequest request = PublishRequest.builder().phoneNumber(phone).message(message).build();
+
+		// Lưu OTP vào bộ nhớ tạm thời
+		otpStore.put(phone, otp);
+		String storedOtp = otpStore.get(phone);
+		log.info("OTP đã lưu: {}", storedOtp);
+		// Gửi OTP qua SNS
+
+		try {
 //        	PublishResponse publish = snsClient.publish(request);
 //        	log.info("Gửi OTP thành công, messageId: {}", publish);
-        }
-        catch (Exception e) {
+		} catch (Exception e) {
 			log.error("Gửi OTP thất bại: {}", e.getMessage());
 		}
-        
-        
-        return otp; // Trả về OTP để lưu tạm (có thể dùng Redis hoặc in-memory)
-    }
-    
-    public boolean verifyOtp(String phone, String otp) {
+
+		return otp; // Trả về OTP để lưu tạm (có thể dùng Redis hoặc in-memory)
+	}
+
+	public boolean verifyOtp(String phone, String otp) {
 		String storedOtp = otpStore.get(phone);
 		log.info("Xác thực OTP: {} cho số điện thoại: {}", otp, phone);
 		// Kiểm tra OTP
 		log.info("OTP đã lưu: {}", otpStore);
-		
+
 		if (storedOtp != null && storedOtp.equals(otp)) {
 			otpStore.remove(phone); // Xóa OTP sau khi xác thực
 			return true;
@@ -85,29 +82,31 @@ public class AwsService {
 		return false;
 	}
 
-    // Upload ảnh lên S3
-    public String uploadToS3(MultipartFile file) throws Exception {
-    	log.info("Upload file: {}", file.getOriginalFilename());
-        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+	// Upload ảnh lên S3
+	public String uploadToS3(MultipartFile file) throws Exception {
+		log.info("Upload file: {}", file.getOriginalFilename());
+		String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
 
-        File convFile = new File(System.getProperty("java.io.tmpdir") + "/" + fileName);
-        try (FileOutputStream fos = new FileOutputStream(convFile)) {
-            fos.write(file.getBytes());
-        }
+		File convFile = new File(System.getProperty("java.io.tmpdir") + "/" + fileName);
+		try (FileOutputStream fos = new FileOutputStream(convFile)) {
+			fos.write(file.getBytes());
+		}
 
-        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                .bucket(bucketName)
-                .key(fileName)
-                .build();
+		PutObjectRequest putObjectRequest = PutObjectRequest.builder().bucket(bucketName).key(fileName).build();
 
-        s3Client.putObject(putObjectRequest, convFile.toPath());
-        convFile.delete();
+		s3Client.putObject(putObjectRequest, convFile.toPath());
+		convFile.delete();
 
-        return "https://dc7q18mlu9m5b.cloudfront.net/" + fileName;
-    }
-    
+		return "https://dc7q18mlu9m5b.cloudfront.net/" + fileName;
+	}
+
 //    Xóa item trên s3s3
-    public void deleteFromS3(String fileName) {
+	public void deleteFromS3(String fileName) {
 		s3Client.deleteObject(b -> b.bucket(bucketName).key(fileName));
+	}
+
+	public void deleteFromS3PrefixCloudFront(String url) {
+		String fileName = url.replace(cloudFrontUrl, "");
+		deleteFromS3(fileName);
 	}
 }

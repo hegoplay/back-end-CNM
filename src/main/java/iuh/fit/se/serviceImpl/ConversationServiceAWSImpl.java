@@ -171,5 +171,30 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		conversation.setUpdatedAt(LocalDateTime.now());
 		conversationRepository.save(conversation);
 	}
+	@Override
+	public void markAllMessagesAsRead(String conversationId, String userId) {
+		// TODO Auto-generated method stub
+		
+		Conversation conversation = conversationRepository.findById(conversationId);
+		if (conversation == null) {
+			log.warn("Conversation with id {} not found", conversationId);
+			throw new RuntimeException("Conversation not found");
+		}
+		List<String> messageIds = conversation.getMessages();
+		if (messageIds == null || messageIds.isEmpty()) {
+			log.warn("No messages found in conversation with id {}", conversationId);
+			return;
+		}
+		for (String messageId : messageIds) {
+			Message message = messageRepository.getMessageById(messageId);
+			if (message != null && !message.getSeenBy().contains(userId)) {
+				message.getSeenBy().add(userId);
+				messageRepository.save(message);
+			}
+		}
+		// Notify the user about the read status
+//		messageNotifier.notifyAllMessagesRead(conversationId, userId);
+		log.info("All messages in conversation {} marked as read by user {}", conversationId, userId);
+	}
 
 }

@@ -14,5 +14,6 @@ public interface ConversationService {
 	
 	void updateLastUpdated(String conversationId);
 	
+	void markAllMessagesAsRead(String conversationId, String userId);
 	
 }
