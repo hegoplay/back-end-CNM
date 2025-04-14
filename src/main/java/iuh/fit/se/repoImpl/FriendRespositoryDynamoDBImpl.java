@@ -29,8 +29,7 @@ public class FriendRespositoryDynamoDBImpl implements FriendRespository {
     private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
     private final DynamoDbTable<User> userTable;
 
-    public List<UserResponseDto> findByPhone(String phone) {
-        List<UserResponseDto> response = new ArrayList<>();
+    public List<User> findByPhone(String phone) {
         DynamoDbTable<User> userTable = dynamoDbEnhancedClient.table("users", TableSchema.fromBean(User.class));
 
         Expression expression = Expression.builder()
@@ -44,17 +43,11 @@ public class FriendRespositoryDynamoDBImpl implements FriendRespository {
                         .build()
         ).items();
 
-        Set<UserResponseDto> userSearchResults = new HashSet<>();
-        for (User user : users) {
-            UserResponseDto result = new UserResponseDto();
-            result.setName(user.getName());
-            result.setBio(user.getBio());
-            result.setMale(user.isMale());
-
-            userSearchResults.add(result);
+        List<User> userSearchResults = new ArrayList<>();
+        for (User user : users){
+            userSearchResults.add(user);
         }
-        response.addAll(userSearchResults);
 
-        return response;
+        return userSearchResults;
     }
 }
