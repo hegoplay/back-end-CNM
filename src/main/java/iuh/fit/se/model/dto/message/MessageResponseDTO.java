@@ -28,7 +28,7 @@ public class MessageResponseDTO {
     @Data
     public static class ReactionDTO {
         private String emoji;
-        private List<String> users;
+//        private List<String> users;
     }
 }
 

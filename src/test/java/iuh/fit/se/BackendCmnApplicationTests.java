@@ -2,10 +2,12 @@ package iuh.fit.se;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import iuh.fit.se.config.AwsConfig;
+import iuh.fit.se.config.SocketIOConfig;
+import iuh.fit.se.model.Conversation;
+import iuh.fit.se.model.Message;
 import iuh.fit.se.model.User;
 import iuh.fit.se.service.UserService;
 import iuh.fit.se.serviceImpl.AwsService;
@@ -34,7 +36,12 @@ class BackendCmnApplicationTests {
 	private DynamoDbEnhancedClient dynamoDbEnhancedClient; // Mock the DynamoDbEnhancedClient bean
 	@MockitoBean
     private DynamoDbTable<User> userTable;
-
+	@MockitoBean
+	private SocketIOConfig socketIOConfig; // Thêm dòng này
+	@MockitoBean
+    private DynamoDbTable<Conversation> conversationTable;
+	
+	@MockitoBean private DynamoDbTable<Message> messageTable;
     @Test
     void contextLoads() {
         // Test will pass if context loads successfully

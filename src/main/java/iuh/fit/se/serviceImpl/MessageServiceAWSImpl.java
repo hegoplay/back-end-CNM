@@ -47,6 +47,7 @@ public class MessageServiceAWSImpl implements MessageService {
             String mediaUrl = awsService.uploadToS3(mediaFile);
             request.setContent(mediaUrl);
             Message message = createAndSaveMessage(request);
+            updateConversation(message);
             notifyParticipants(message);
             return MessageMapper.INSTANCE.toMessageResponseDto(message);
         } catch (Exception e) {
@@ -57,10 +58,11 @@ public class MessageServiceAWSImpl implements MessageService {
     @Override
     public MessageResponseDTO sendFileMessage(MessageRequestDTO request, MultipartFile file) {
         try {
-            validateMessageType(request, MessageType.FILE);
+            validateMessageType(request, MessageType.FILE, MessageType.MEDIA);
             String fileUrl = awsService.uploadToS3(file);
             request.setContent(fileUrl);
             Message message = createAndSaveMessage(request);
+            updateConversation(message);
             notifyParticipants(message);
             return MessageMapper.INSTANCE.toMessageResponseDto(message);
         } catch (Exception e) {
@@ -90,6 +92,10 @@ public class MessageServiceAWSImpl implements MessageService {
 
         message.setRecalled(true);
         messageRepository.save(message);
+//      xóa media hoặc file đính kèm
+        if (message.getType() == MessageType.MEDIA || message.getType() == MessageType.FILE) {
+			awsService.deleteFromS3PrefixCloudFront(message.getContent());
+		}
         
         // Sử dụng MessageNotifier thay vì SocketIOService trực tiếp
         messageNotifier.notifyMessageRecalled(message.getConversationId(), messageId);
@@ -184,10 +190,14 @@ public class MessageServiceAWSImpl implements MessageService {
         }
     }
 
-    private void validateMessageType(MessageRequestDTO request, MessageType expectedType) {
-        if (request.getType() != expectedType) {
-            throw new IllegalArgumentException("Invalid message type. Expected: " + expectedType);
-        }
+    private void validateMessageType(MessageRequestDTO request, MessageType ...expectedType) {
+        if (request.getType() == null) {
+			throw new IllegalArgumentException("Message type is required");
+		}
+
+		if (!Arrays.asList(expectedType).contains(request.getType())) {
+			throw new IllegalArgumentException("Invalid message type");
+		}
     }
 
     private void notifyParticipants(Message message) {
@@ -202,6 +212,27 @@ public class MessageServiceAWSImpl implements MessageService {
 		conversation.setUpdatedAt(LocalDateTime.now());
 		conversation.addMessageId(msg.getId());
 		conversationRepository.save(conversation);
+	}
+
+	@Override
+	public MessageResponseDTO markMessageAsRead(String messageId, String userId) {
+		// TODO Auto-generated method stub
+		Message message = messageRepository.findById(messageId)
+				.orElseThrow(() -> new RuntimeException("Message not found"));
+		if (message.getSeenBy() == null) {
+			message.setSeenBy(new ArrayList<>());
+		}
+		if (!message.getSeenBy().contains(userId)) {
+			message.getSeenBy().add(userId);
+		}
+		messageRepository.save(message);
+		// Sử dụng MessageNotifier cái này lập trình sau
+		
+		// messageNotifier.notifyMessageRead(message.getConversationId(), messageId, userId);
+		
+		return MessageMapper.INSTANCE.toMessageResponseDto(message);
+		
+	
 	}
 
 }

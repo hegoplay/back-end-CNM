@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -64,6 +65,14 @@ public class ConversationController {
 		String phone = jwtUtils.getPhoneFromToken(jwt);
 		ConversationDetailDto conversation = conversationService.getConversationDetail(conversationId);
 		messageNotifier.initConversation(conversation, phone);
+		return ResponseEntity.ok().build();
+	}
+	@PostMapping("/mark-as-read/{conversationId}")
+	public ResponseEntity<Void> markAllMessagesAsRead(@PathVariable String conversationId, @RequestHeader("Authorization") String authHeader) {
+		log.info("Marking all messages as read for conversation: {}", conversationId);
+		String jwt = authHeader.substring(7);
+		String phone = jwtUtils.getPhoneFromToken(jwt);
+		conversationService.markAllMessagesAsRead(conversationId, phone);
 		return ResponseEntity.ok().build();
 	}
 }

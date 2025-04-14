@@ -20,6 +20,7 @@ public class GlobalExceptionHandler {
 		ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR,
 				ex.getMessage());
 		problemDetail.setTitle("Internal Server Error");
+		log.error("Internal Server Error: {}", ex.getMessage());
 		return ResponseEntity.of(problemDetail).build();
 	}
 

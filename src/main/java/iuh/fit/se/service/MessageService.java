@@ -17,4 +17,13 @@ public interface MessageService {
 	
 	MessageResponseDTO sendFileMessage(MessageRequestDTO request, MultipartFile file);
 	MessageResponseDTO sendCallEventMessage(MessageRequestDTO request);
+//	MessageResponseDTO sendLocationMessage(MessageRequestDTO request);
+	MessageResponseDTO markMessageAsRead(String messageId, String userId);
+	
+	
+//	List<MessageResponseDTO> getMessagesByUser(String userId);
+//	List<MessageResponseDTO> getMessagesByGroup(String groupId);
+//	List<MessageResponseDTO> getMessagesByUserAndGroup(String userId, String groupId);
+//	List<MessageResponseDTO> getMessagesByUserAndConversation(String userId, String conversationId);
+//	List<MessageResponseDTO> getMessagesByGroupAndConversation(String groupId, String conversationId);
 }

@@ -54,6 +54,7 @@ public class SocketIOService {
                     user -> {
                         user.getConversations().forEach(conv -> client.joinRoom(conv));
                         List<ConversationDto> conversations = conversationService.getConversations(username);
+//                      load danh sách conversationrge
                         client.sendEvent("initial_conversations", conversations);
                     },
                     () -> {
