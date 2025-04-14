@@ -32,8 +32,11 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 
 	@Value("${aws.region}")
 	private String region;
+	@Value("${cloudfront.url}")
+	private String cloudfrontUrl;
 
 	private final DynamoDbClient dynamoDbClient;
+	private final AwsService awsService;//	private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
 //	private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
 	private final PasswordEncoder passwordEncoder;
 	private final UserRepository userRepository;
@@ -126,12 +129,37 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 		}
 		User updatedUser = UserMapper.INSTANCE.fromUserUpdateRequestMapToUser(request, user);
 		log.info("User updated: {}", updatedUser);
+		String backgroundImg = user.getBackgroundImg();
+		String baseImg = user.getBaseImg();
+		try {
+			if (request.backgroundImg() != null) {
+				
+//				xóa ảnh cũ
+//				backgroundImg là đường dẫn có dinh tới cloudfront
+//				awsService.deleteFromS3(backgroundImg);
+				awsService.deleteFromS3(backgroundImg.replace(cloudfrontUrl, ""));
+				
+				backgroundImg = awsService.uploadToS3(request.backgroundImg());
+			}
+			if (request.baseImg() != null) {
+				
+				awsService.deleteFromS3(baseImg.replace(cloudfrontUrl, ""));
+				baseImg = awsService.uploadToS3(request.baseImg());
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			throw new RuntimeException("upload fail");
+		}
+		log.info("User updated: {}", updatedUser);
 		updatedUser.setUpdatedAt(LocalDateTime.now());
+		updatedUser.setBackgroundImg(backgroundImg);
+		updatedUser.setBaseImg(baseImg);
 		userRepository.save(updatedUser);
 		UserResponseDto dto = UserMapper.INSTANCE.toUserResponseDto(updatedUser);
 		log.info("User response: {}", dto);
 		return dto;
-
+		
+		
 	}
 
 	@Override
@@ -153,8 +181,18 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 	@Override
 	public void updateUserStatus(String phone, String status) {
 		// TODO Auto-generated method stub
-
+		User user = userRepository.findByPhone(phone);
+		if (user != null) {
+			user.setOnline(true);
+			user.setStatus(status);
+			user.setUpdatedAt(LocalDateTime.now());
+			userRepository.save(user);
+		}
+		else {
+			throw new RuntimeException("User not found");
+		}
 	}
+	
 
 	@Override
 	public void deleteUser(String phone) {

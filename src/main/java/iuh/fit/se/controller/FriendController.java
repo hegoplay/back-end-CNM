@@ -25,7 +25,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
-@RequestMapping("/api/auth/friends")
+@RequestMapping("/api/friends")
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @Slf4j
@@ -72,6 +72,7 @@ public class FriendController {
         log.info("Received request body: {}", requestBody);
 
         Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
         response.put("message", "Search successful!");
         response.put("data", requestBody);
 
