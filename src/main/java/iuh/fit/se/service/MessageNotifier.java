@@ -9,4 +9,5 @@ public interface MessageNotifier {
     void notifyMessageRecalled(String conversationId, String messageId);
     void notifyReactionAdded(String conversationId, String messageId, String emoji, String userId);
     void initConversation(ConversationDetailDto conversationDetail, String userId);
+    void notifyAllMessagesRead(String conversationId, String userId);
 }

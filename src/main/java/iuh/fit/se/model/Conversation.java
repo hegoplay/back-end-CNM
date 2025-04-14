@@ -13,6 +13,8 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttri
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbConvertedBy;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondaryPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondarySortKey;
 
 @DynamoDbBean
 @lombok.NoArgsConstructor
@@ -63,4 +65,9 @@ public class Conversation {
 		return false; // Messages list is null
 		
 	}
+	
+	@DynamoDbSecondaryPartitionKey(indexNames = "updatedAt-index")
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
 }

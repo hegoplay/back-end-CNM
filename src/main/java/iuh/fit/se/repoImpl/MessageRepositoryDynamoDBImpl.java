@@ -1,6 +1,5 @@
 package iuh.fit.se.repoImpl;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -8,16 +7,23 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import javax.swing.SortOrder;
+
 import org.springframework.stereotype.Repository;
 
-import iuh.fit.se.model.Conversation;
 import iuh.fit.se.model.Message;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbIndex;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
+import software.amazon.awssdk.services.dynamodb.model.DescribeTableRequest;
+import software.amazon.awssdk.services.dynamodb.model.DescribeTableResponse;
+import software.amazon.awssdk.services.dynamodb.model.DynamoDbException;
+import software.amazon.awssdk.services.dynamodb.model.IndexStatus;
 
 @Repository
 @RequiredArgsConstructor
@@ -25,6 +31,7 @@ import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
 public class MessageRepositoryDynamoDBImpl implements iuh.fit.se.repo.MessageRepository {
     
     private final DynamoDbTable<Message> messageTable;
+    private final software.amazon.awssdk.services.dynamodb.DynamoDbClient dynamoDbClient;	
     
     @Override
     public void save(Message message) {
@@ -111,5 +118,90 @@ public class MessageRepositoryDynamoDBImpl implements iuh.fit.se.repo.MessageRep
         
         Message message = messageTable.getItem(key);
 		return Optional.ofNullable(message);
+	}
+
+	@Override
+    public List<Message> findMessagesByConversationId(String conversationId) {
+        try {
+            String indexName = "conversationId-createdAt-index";
+
+            // Kiểm tra trạng thái GSI
+            if (!isGsiActive("messages", indexName)) {
+                log.warn("GSI {} is not active", indexName);
+                throw new IllegalStateException("GSI " + indexName + " is not ready for querying");
+            }
+
+            // Truy vấn GSI với sắp xếp giảm dần (mới nhất trước)
+            QueryConditional queryConditional = QueryConditional.keyEqualTo(Key.builder()
+                .partitionValue(conversationId)
+                .build());
+            QueryEnhancedRequest request = QueryEnhancedRequest.builder()
+                .queryConditional(queryConditional)
+                .scanIndexForward(false) // Sắp xếp giảm dần theo createdAt (mới nhất trước)
+                .build();
+
+            DynamoDbIndex<Message> index = messageTable.index(indexName);
+            List<Message> messages = new ArrayList<>();
+            Iterator<Page<Message>> pageIterator = index.query(request).iterator();
+
+            // Lấy tất cả tin nhắn (không giới hạn)
+            while (pageIterator.hasNext()) {
+                Page<Message> page = pageIterator.next();
+                messages.addAll(page.items());
+            }
+
+            return messages;
+
+        } catch (DynamoDbException e) {
+            log.error("Error retrieving messages for conversation ID {}: {}", conversationId, e.getMessage());
+            throw new RuntimeException("Failed to retrieve messages", e);
+        }
+    }
+
+    // Kiểm tra trạng thái GSI
+    private boolean isGsiActive(String tableName, String indexName) {
+        try {
+            DescribeTableResponse response = dynamoDbClient.describeTable(DescribeTableRequest.builder()
+                .tableName(tableName)
+                .build());
+            return response.table().globalSecondaryIndexes().stream()
+                .filter(index -> index.indexName().equals(indexName))
+                .anyMatch(index -> index.indexStatus() == IndexStatus.ACTIVE);
+        } catch (DynamoDbException e) {
+            log.error("Error checking GSI status for table {} and index {}: {}", tableName, indexName, e.getMessage());
+            return false;
+        }
+    }
+
+	@Override
+	public int countUnreadMessages(String conversationId, String userId) {
+		// TODO Auto-generated method stub
+		QueryConditional queryConditional = QueryConditional.keyEqualTo(Key.builder()
+				.partitionValue(conversationId)
+				.build());
+		QueryEnhancedRequest request = QueryEnhancedRequest.builder()
+				.queryConditional(queryConditional)
+				.scanIndexForward(false) // Sắp xếp giảm dần theo createdAt (mới nhất trước)
+				.build();
+
+		DynamoDbIndex<Message> index = messageTable.index("conversationId-createdAt-index");
+		List<Message> messages = new ArrayList<>();
+		Iterator<Page<Message>> pageIterator = index.query(request).iterator();
+
+		// Lấy tất cả tin nhắn (không giới hạn)
+		while (pageIterator.hasNext()) {
+			Page<Message> page = pageIterator.next();
+			messages.addAll(page.items());
+		}
+
+		// Đếm số tin nhắn chưa đọc
+		int unreadCount = 0;
+		for (Message message : messages) {
+			if (!message.getSeenBy().contains(userId) && !message.getSenderId().equals(userId)) {
+				unreadCount++;
+			}
+		}
+
+		return unreadCount;
 	}
 }

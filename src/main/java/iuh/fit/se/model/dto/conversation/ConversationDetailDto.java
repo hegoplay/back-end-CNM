@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import iuh.fit.se.model.Message;
 import iuh.fit.se.model.dto.message.MessageResponseDTO;
 import iuh.fit.se.model.enumObj.ConversationType;
@@ -24,7 +26,8 @@ public class ConversationDetailDto {
     
     private Boolean callInProgress;
     private String currentCallId;
-
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    LocalDateTime updatedAt;
 
     public String getId() {
         return id;

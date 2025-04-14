@@ -59,15 +59,6 @@ public class MessageController {
  * @param mediaFile là file đính kèm
  * @return
  */
-//    @PostMapping(value = "/media", consumes = "multipart/form-data")
-//    public ResponseEntity<MessageResponseDTO> sendMediaMessage(
-//            @RequestHeader("Authorization") String authHeader,
-//            @RequestPart MessageRequestDTO request,
-//            @RequestPart MultipartFile mediaFile) {
-//        String phone = getCurrentUserPhone(authHeader);
-//        request.setSenderId(phone);
-//        return ResponseEntity.ok(messageService.sendMediaMessage(request, mediaFile));
-//    }
     /**
      * 
      * @param authHeader cái này là JWT
