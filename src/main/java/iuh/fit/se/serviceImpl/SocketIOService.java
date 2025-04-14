@@ -1,29 +1,24 @@
 package iuh.fit.se.serviceImpl;
 
-import com.corundumstudio.socketio.SocketIOClient;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+
 import com.corundumstudio.socketio.SocketIOServer;
-import com.corundumstudio.socketio.annotation.OnConnect;
-import com.corundumstudio.socketio.annotation.OnDisconnect;
-import iuh.fit.se.model.Conversation;
+
 import iuh.fit.se.model.User;
-import iuh.fit.se.model.dto.conversation.ConversationDetailDto;
 import iuh.fit.se.model.dto.conversation.ConversationDto;
-import iuh.fit.se.model.dto.message.*;
-import iuh.fit.se.repo.ConversationRepository;
+import iuh.fit.se.repo.MessageRepository;
 import iuh.fit.se.repo.UserRepository;
 import iuh.fit.se.service.ConversationService;
-import iuh.fit.se.service.MessageService;
 import iuh.fit.se.util.JwtUtils;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -33,14 +28,14 @@ public class SocketIOService {
     private final SocketIOServer socketIOServer;
     private final UserRepository userRepository;
     private final ConversationService conversationService;
+    private final MessageRepository messageRepository;
+    private final SocketIONotifier notifier;
     private final JwtUtils jwtUtils;
 
     @PostConstruct
     public void start() {
-        // Tạo namespace /chat
         com.corundumstudio.socketio.SocketIONamespace chatNamespace = socketIOServer.addNamespace("/chat");
-        
-        // Xử lý kết nối trong namespace
+
         chatNamespace.addConnectListener(client -> {
             String token = client.getHandshakeData().getSingleUrlParam("token");
             try {
@@ -48,23 +43,37 @@ public class SocketIOService {
                 client.set("username", username);
                 log.info("Client connected to chat namespace: {} - {}", client.getSessionId(), username);
 
-                // Load và gửi danh sách conversation
-                Optional<User> userOpt = Optional.of(userRepository.findByPhone(username));
-                userOpt.ifPresentOrElse(
-                    user -> {
-                        user.getConversations().forEach(conv -> client.joinRoom(conv));
-                        List<ConversationDto> conversations = conversationService.getConversations(username);
-//                      load danh sách conversationrge
-                        client.sendEvent("initial_conversations", conversations);
-                    },
-                    () -> {
-                        log.error("User not found: {}", username);
-                        client.sendEvent("auth_error", "USER_NOT_FOUND");
-                        client.disconnect();
+                notifier.registerClient(username, client);
+
+                Optional<User> userOpt = Optional.ofNullable(userRepository.findByPhone(username));
+                userOpt.ifPresentOrElse(user -> {
+                    List<String> conversationIds = user.getConversations();
+                    if (conversationIds != null) {
+                        conversationIds.forEach(conv -> client.joinRoom(conv));
                     }
-                );
-                
-                
+
+                    // Gửi danh sách hội thoại
+                    List<ConversationDto> conversations = conversationService.getConversations(username);
+                    client.sendEvent("initial_conversations", conversations);
+
+                    // Đếm số tin nhắn chưa đọc
+                    Map<String, Integer> unreadCountMap = new HashMap<>();
+                    for (ConversationDto conv : conversations) {
+                        int unreadCount = messageRepository.countUnreadMessages(conv.getId(), username);
+                        if (unreadCount > 0) {
+                            unreadCountMap.put(conv.getId(), unreadCount);
+                        }
+                    }
+
+                    // Gửi unread_counts
+                    notifier.notifyUnreadCounts(username, unreadCountMap);
+
+                }, () -> {
+                    log.error("User not found: {}", username);
+                    client.sendEvent("auth_error", "USER_NOT_FOUND");
+                    client.disconnect();
+                });
+
             } catch (Exception e) {
                 log.error("Authentication failed: {}", e.getMessage());
                 client.sendEvent("auth_error", "INVALID_TOKEN");
@@ -72,13 +81,17 @@ public class SocketIOService {
             }
         });
 
-        // Đăng ký các sự kiện trong namespace
-//        registerChatEvents(chatNamespace);
-        
+        chatNamespace.addDisconnectListener(client -> {
+            String username = client.get("username");
+            if (username != null) {
+                notifier.removeClient(username);
+                log.info("Client disconnected: {} - {}", client.getSessionId(), username);
+            }
+        });
+
         socketIOServer.start();
         log.info("Socket.IO server started with /chat namespace");
     }
-
 
     @PreDestroy
     public void stop() {

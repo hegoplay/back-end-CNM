@@ -193,7 +193,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			}
 		}
 		// Notify the user about the read status
-//		messageNotifier.notifyAllMessagesRead(conversationId, userId);
+		messageNotifier.notifyAllMessagesRead(conversationId, userId);
 		log.info("All messages in conversation {} marked as read by user {}", conversationId, userId);
 	}
 

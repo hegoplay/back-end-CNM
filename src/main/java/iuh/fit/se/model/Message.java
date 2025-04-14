@@ -16,6 +16,8 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttri
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbConvertedBy;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondaryPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondarySortKey;
 
 @Data
 @lombok.NoArgsConstructor
@@ -74,5 +76,15 @@ public class Message {
     @DynamoDbConvertedBy(TypeMessageConverter.class)
     public MessageType getType() {
         return type;
+    }
+    
+    @DynamoDbSecondaryPartitionKey(indexNames = "conversationId-createdAt-index")
+    public String getConversationId() {
+        return conversationId;
+    }
+    
+    @DynamoDbSecondarySortKey(indexNames = "conversationId-createdAt-index")
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 }
