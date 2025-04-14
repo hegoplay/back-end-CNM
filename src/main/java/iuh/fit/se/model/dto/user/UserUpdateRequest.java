@@ -1,7 +1,6 @@
 package iuh.fit.se.model.dto.user;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import org.springframework.web.multipart.MultipartFile;
 

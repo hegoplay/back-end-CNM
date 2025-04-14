@@ -60,7 +60,6 @@ public class AwsConfig {
     DynamoDbTable<User> userTable(DynamoDbEnhancedClient enhancedClient) {
         return enhancedClient.table("users", TableSchema.fromBean(User.class));
     }
-	
 	@Bean
     DynamoDbTable<Conversation> conversationTable(DynamoDbEnhancedClient enhancedClient) {
         return enhancedClient.table("conversations", TableSchema.fromBean(Conversation.class));

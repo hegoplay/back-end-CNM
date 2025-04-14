@@ -14,14 +14,12 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-
 import iuh.fit.se.model.dto.auth.ForgotPasswordRequest;
 import iuh.fit.se.model.dto.auth.LoginRequest;
 import iuh.fit.se.model.dto.auth.LoginResponse;
+import iuh.fit.se.model.dto.auth.PhoneRequest;
 import iuh.fit.se.model.dto.auth.RegisterRequest;
 import iuh.fit.se.model.dto.auth.RegisterResponse;
-
-//import iuh.fit.se.service.AwsService;
 import iuh.fit.se.service.UserService;
 import iuh.fit.se.serviceImpl.AwsService;
 import iuh.fit.se.util.JwtUtils;
@@ -80,10 +78,10 @@ public class AuthController {
      * success or not
      */
     @PostMapping("/send-otp")
-    public ResponseEntity<Map<String, Boolean>> sendOtp(@RequestBody PhoneObj phoneObj) {
+    public ResponseEntity<Map<String, Boolean>> sendOtp(@RequestBody String phone) {
 //        log.info("OTP sent: {}", request.getPhone());
         Map<String, Boolean> response = new HashMap<>();
-        awsService.sendOtp(phoneObj.phone);
+        awsService.sendOtp(phone);
         response.put("success", true);
         return ResponseEntity.ok(response);
     }
@@ -129,6 +127,29 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    
+/**
+ *     
+ * @param phone
+ * @return
+ * isExist
+ */
+    
+//    @PostMapping("/check-phone")
+//    public ResponseEntity<Map<String, Boolean>> checkPhone(@RequestBody String phone) {
+//		Map<String, Boolean> response = new HashMap<>();
+//		boolean isExist = userService.isExistPhone(phone);
+//		response.put("isExist", isExist);
+//		return ResponseEntity.ok(response);
+//	}
+
+    @PostMapping("/check-phone")
+    public ResponseEntity<Map<String, Boolean>> checkPhone(@RequestBody PhoneRequest request) {
+        String cleanPhone = request.getPhone().replace("\"", "").trim();
+        boolean exists = userService.isExistPhone(cleanPhone);
+        return ResponseEntity.ok(Map.of("isExist", exists));
+    }
+    
     @PostMapping("/register")
     public ResponseEntity<RegisterResponse> register(@ModelAttribute RegisterRequest request) throws Exception {
         log.info(request.toString());
@@ -180,7 +201,6 @@ public class AuthController {
         response.put("success", true);
         return ResponseEntity.ok(response);
     }
-
     @PostMapping("/logout")
     public ResponseEntity<Map<String, Object>> logout(@RequestHeader("Authorization") String authHeader) {
         // Kiểm tra header và loại bỏ prefix "Bearer " nếu có

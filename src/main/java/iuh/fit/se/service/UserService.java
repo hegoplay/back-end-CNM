@@ -2,11 +2,13 @@ package iuh.fit.se.service;
 
 import java.util.List;
 
+import iuh.fit.se.model.User;
 import iuh.fit.se.model.dto.UserResponseDto;
 import iuh.fit.se.model.dto.auth.LoginRequest;
 import iuh.fit.se.model.dto.auth.LoginResponse;
 import iuh.fit.se.model.dto.auth.RegisterRequest;
 import iuh.fit.se.model.dto.user.UserUpdateRequest;
+import iuh.fit.se.model.dto.user.UserUpdateRequestJSON;
 
 public interface UserService {
 	boolean isExistPhone(String phone);
@@ -21,6 +23,8 @@ public interface UserService {
 	
 	UserResponseDto updateUserInfo(String phone, UserUpdateRequest request);
 	
+	UserResponseDto updateUserInfo(String phone, UserUpdateRequestJSON request);
+	
 	void updateUserStatus(String phone, String status);
 	
 	void deleteUser(String phone);
@@ -29,7 +33,9 @@ public interface UserService {
 	
 	void changePassword(String jwt, String phone, String password);
 	
-	List<UserResponseDto> getFriends(String phone);
+	User getUserFromToken(String jwt);
 	
+	List<UserResponseDto> getFriends(String phone);
+
 	void acceptRequest(String phone, String friendPhone);
 }
