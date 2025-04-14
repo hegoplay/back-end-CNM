@@ -8,6 +8,7 @@ import org.mapstruct.factory.Mappers;
 import iuh.fit.se.model.User;
 import iuh.fit.se.model.dto.UserResponseDto;
 import iuh.fit.se.model.dto.user.UserUpdateRequest;
+import iuh.fit.se.model.dto.user.UserUpdateRequestJSON;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {
@@ -19,7 +20,10 @@ public interface UserMapper {
 	UserResponseDto toUserResponseDto(User user);
 	
 	@Mapping(target = "male", source = "isMale")  // Rõ ràng mapping boolean
-	@Mapping(target = "backgroundImg", ignore = true) // 👉 ignore ở đây
-	@Mapping(target = "baseImg", ignore = true) // 👉 ignore ở đây
+	@Mapping(target = "baseImg", ignore = true)
+	@Mapping(target = "backgroundImg", ignore = true)
 	User fromUserUpdateRequestMapToUser(UserUpdateRequest userRequest, @MappingTarget User user);
+	
+	@Mapping(target = "male", source = "isMale")  // Rõ ràng mapping boolean
+	User fromUserUpdateRequestJSONMapToUser(UserUpdateRequestJSON userRequest, @MappingTarget User user);
 }

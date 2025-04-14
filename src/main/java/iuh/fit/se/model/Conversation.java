@@ -31,6 +31,7 @@ public class Conversation {
 	private Boolean callInProgress;
 	private String currentCallId;
 
+
 	@DynamoDbPartitionKey
 	@DynamoDbAttribute("id")
 	public String getId() {
