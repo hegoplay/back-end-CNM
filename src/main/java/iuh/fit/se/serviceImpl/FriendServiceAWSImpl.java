@@ -38,7 +38,13 @@ public class FriendServiceAWSImpl implements FriendService {
 
     @Override
     public List<UserResponseDto> findPersonByPhone(String phone) {
-        return friendRepository.findByPhone(phone);
+        List<User> resultObjectList = friendRepository.findByPhone(phone);
+        List<UserResponseDto> resultDtoList = new ArrayList<>();
+        for(User user : resultObjectList) {
+            UserResponseDto dto = UserMapper.INSTANCE.toUserResponseDto(user);
+            resultDtoList.add(dto);
+        }
+        return resultDtoList;
     }
 
     @Override
