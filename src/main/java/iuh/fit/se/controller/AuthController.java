@@ -112,20 +112,6 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     *
-     * @param phone
-     * @return
-     * isExist
-     */
-
-    @PostMapping("/check-phone")
-    public ResponseEntity<Map<String, Boolean>> checkPhone(@RequestBody PhoneObj phoneObj) {
-        Map<String, Boolean> response = new HashMap<>();
-        boolean isExist = userService.isExistPhone(phoneObj.phone);
-        response.put("isExist", isExist);
-        return ResponseEntity.ok(response);
-    }
 
     
 /**
@@ -135,13 +121,6 @@ public class AuthController {
  * isExist
  */
     
-//    @PostMapping("/check-phone")
-//    public ResponseEntity<Map<String, Boolean>> checkPhone(@RequestBody String phone) {
-//		Map<String, Boolean> response = new HashMap<>();
-//		boolean isExist = userService.isExistPhone(phone);
-//		response.put("isExist", isExist);
-//		return ResponseEntity.ok(response);
-//	}
 
     @PostMapping("/check-phone")
     public ResponseEntity<Map<String, Boolean>> checkPhone(@RequestBody PhoneRequest request) {

@@ -90,6 +90,7 @@ public class UserController {
 
     }
     //	Authorization chinh la jwt
+    
     @PutMapping("/")
     public ResponseEntity<UserResponseDto> updateUserInfo(@RequestHeader("Authorization") String authHeader, @ModelAttribute UserUpdateRequest userInfo) {
         log.info("JOINED");
