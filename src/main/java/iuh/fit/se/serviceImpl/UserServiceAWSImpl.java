@@ -146,7 +146,7 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 		String backgroundImg = user.getBackgroundImg();
 		String baseImg = user.getBaseImg();
 		try {
-			if (request.backgroundImg() != null) {
+			if (backgroundImg != null) {
 
 				// xóa ảnh cũ
 				// backgroundImg là đường dẫn có dinh tới cloudfront
@@ -156,7 +156,7 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 
 				backgroundImg = awsService.uploadToS3(request.backgroundImg());
 			}
-			if (request.baseImg() != null) {
+			if (baseImg != null) {
 
 				awsService.deleteFromS3(baseImg.replace(cloudfrontUrl, ""));
 				baseImg = awsService.uploadToS3(request.baseImg());
