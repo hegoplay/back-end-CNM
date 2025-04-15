@@ -192,9 +192,12 @@ public class FriendController {
 		try {
 			String senderPhoneNumber = extractPhoneNumberFromToken(
 					authorizationHeader);
-			receiverPhoneNumber = FormatUtils.formatPhoneNumber(receiverPhoneNumber);
 			log.info("User {} is canceling friend request to {}",
 					senderPhoneNumber, receiverPhoneNumber);
+			receiverPhoneNumber = FormatUtils.formatPhoneNumber(receiverPhoneNumber);
+			// Gọi service xử lý hủy lời mời
+			log.info("Sender: {}, Receiver: {}", senderPhoneNumber,
+					receiverPhoneNumber);
 			friendService.cancelFriendRequest(senderPhoneNumber,
 					receiverPhoneNumber);
 //			conversationService.deleteFriendConversation(senderPhoneNumber,
@@ -303,7 +306,7 @@ public class FriendController {
 					senderPhoneNumber);
 			Map<String, Boolean> response = new HashMap<>();
 			response.put("isPending", isPending);
-
+			log.info("{}",isPending);
 			return ResponseEntity.ok(response);
 		} catch (Exception e) {
 			log.error("Error checking request status: {}", e.getMessage());

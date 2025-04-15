@@ -180,9 +180,13 @@ public void cancelFriendRequest(String senderPhoneNumber, String receiverPhoneNu
 		throw new RuntimeException("Không tìm thấy người gửi: " + senderPhoneNumber);
 	}
     
-    if (sender.getPendings().contains(receiverPhoneNumber)) {
-    	sender.getPendings().remove(receiverPhoneNumber);
-        userRepository.save(sender);
+    log.info("Receiver: {}", receiver.getPendings());
+    
+    boolean isPending = false;
+//    receiver.getPendings().stream().anyMatch(x -> x.equalsIgnoreCase(receiverPhoneNumber))
+    if (receiver.getPendings().contains(senderPhoneNumber)) {
+    	receiver.getPendings().remove(senderPhoneNumber);
+        userRepository.save(receiver);
     } else {
         throw new RuntimeException("Không có lời mời kết bạn từ: " + senderPhoneNumber);
     }
@@ -256,12 +260,17 @@ public boolean isRequestPending(String userPhoneNumber,
 	// TODO Auto-generated method stub
 	userPhoneNumber = formatPhoneNumber(userPhoneNumber);
 	friendPhoneNumber = formatPhoneNumber(friendPhoneNumber);
-	User user = userRepository.findByPhone(friendPhoneNumber);
+	User user = userRepository.findByPhone(userPhoneNumber);
 	if (user == null) {
 		throw new RuntimeException("Không tìm thấy user: " + userPhoneNumber);
 	}
+	User friend = userRepository.findByPhone(friendPhoneNumber);
+	if (friend == null) {
+		throw new RuntimeException("Không tìm thấy bạn: " + friendPhoneNumber);
+	}
 	
-	return user.getPendings().contains(userPhoneNumber);
+	
+	return friend.getPendings().contains(userPhoneNumber);
 }
 
 @Override

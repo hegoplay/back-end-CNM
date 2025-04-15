@@ -119,7 +119,7 @@ public class MessageRepositoryDynamoDBImpl implements iuh.fit.se.repo.MessageRep
         Message message = messageTable.getItem(key);
 		return Optional.ofNullable(message);
 	}
-
+	@SuppressWarnings("thay đổi thứ tự duyệt tin nhắn ")
 	@Override
     public List<Message> findMessagesByConversationId(String conversationId) {
         try {
@@ -137,6 +137,7 @@ public class MessageRepositoryDynamoDBImpl implements iuh.fit.se.repo.MessageRep
                 .build());
             QueryEnhancedRequest request = QueryEnhancedRequest.builder()
                 .queryConditional(queryConditional)
+                .limit(200) // Giới hạn số lượng tin nhắn trả về
                 .scanIndexForward(true) // Sắp xếp tăng dần theo createdAt (cũ nhất trước)
                 .build();
 
