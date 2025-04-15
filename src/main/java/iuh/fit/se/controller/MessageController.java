@@ -41,7 +41,7 @@ public class MessageController {
     }
 
    
-    
+//   Gửi tin nhắn văn bản
     @PostMapping("/text")
     public ResponseEntity<MessageResponseDTO> sendTextMessage(
             @RequestHeader("Authorization") String authHeader,

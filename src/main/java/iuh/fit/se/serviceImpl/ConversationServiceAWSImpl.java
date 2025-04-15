@@ -144,14 +144,14 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		log.info("Conversation detail: {}", conversationDetailDto);
 		
 		List<String> messageIds = conversation.getMessages();
+		List<Message> messagesList = messageRepository.findMessagesByConversationId(conversationId);
 		List<MessageResponseDTO> messages = new ArrayList<>();
 		
-		for (String messageId : messageIds) {
-			Message message = messageRepository.getMessageById(messageId);
-			if (message != null) {
-				messages.add(MessageMapper.INSTANCE.toMessageResponseDto(message));
-			}
+		for (Message message : messagesList) {
+			MessageResponseDTO messageResponseDTO = MessageMapper.INSTANCE.toMessageResponseDto(message);
+			messages.add(messageResponseDTO);
 		}
+		
 		
 		conversationDetailDto.setMessageDetails((messages));
 		
