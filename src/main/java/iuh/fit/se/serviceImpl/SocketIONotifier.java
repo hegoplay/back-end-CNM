@@ -128,4 +128,21 @@ public class SocketIONotifier implements MessageNotifier {
 		}
 		
 	}
+
+	@Override
+	public void notifyRemoveConversation(String conversationId, String userId) {
+		// TODO Auto-generated method stub
+		log.info("Notifying remove conversation: conversationId = {}, userId = {}", 
+				conversationId, userId);
+		SocketIOClient client = userClientMap.get(userId);
+		log.info("Map: {}", userClientMap);
+		if (client != null) {
+			client.sendEvent("delete_conversation", conversationId);
+		} else {
+			log.warn("No client found for userId: {}", userId);
+		}
+		
+	}
+		
+		
 }

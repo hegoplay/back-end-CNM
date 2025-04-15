@@ -28,5 +28,11 @@ public interface FriendService {
     // Xóa bạn
     void removeFriend(String userPhoneNumber, String friendPhoneNumber);
     
+    // Kiểm tra xem lời mời kết bạn
+    boolean isRequestPending(String userPhoneNumber, String friendPhoneNumber);
+    
+    // Kiểm tra xem đã là bạn hay chưa
+    boolean isFriend(String userPhoneNumber, String friendPhoneNumber);
+    
     
 }
