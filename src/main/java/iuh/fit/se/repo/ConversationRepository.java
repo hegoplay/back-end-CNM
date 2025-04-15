@@ -1,5 +1,7 @@
 package iuh.fit.se.repo;
 
+import java.util.List;
+
 import iuh.fit.se.model.Conversation;
 
 public interface ConversationRepository {

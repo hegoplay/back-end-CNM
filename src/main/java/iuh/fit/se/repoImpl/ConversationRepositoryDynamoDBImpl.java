@@ -1,6 +1,7 @@
 package iuh.fit.se.repoImpl;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
@@ -123,5 +124,6 @@ public class ConversationRepositoryDynamoDBImpl implements iuh.fit.se.repo.Conve
 		}
 		return false;
 	}
+
 	
 }
