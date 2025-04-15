@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import iuh.fit.se.model.dto.search.FindPeopleByNameKeywordResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -102,32 +104,34 @@ public class FriendController {
 		return ResponseEntity.ok(response);
 	}
 
-	@PostMapping("/find-friends-by-name-keyword")
-	public ResponseEntity<List<UserResponseDto>> findFriendsByNameKeyword(
-			@RequestHeader("Authorization") String authHeader,
-			@RequestBody Map<String, String> request) {
-		// {
-		// "nameKeyword" : "Manh"
-		// }
-		String jwt = authHeader.substring(7);
-		String userPhone = jwtUtils.getPhoneFromToken(jwt);
+	@PostMapping("/find-people-by-name-keyword")
+    public ResponseEntity<FindPeopleByNameKeywordResponse> findPeopleByNameKeyword(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody Map<String, String> request) {
+//    {
+//        "nameKeyword" : "Manh"
+//    }
+        String jwt = authHeader.substring(7);
+        String userPhone = jwtUtils.getPhoneFromToken(jwt);
 
-		String nameKeyword = request.get("nameKeyword");
-		log.info("Finding users with nameKeyword: {}", nameKeyword);
+        String nameKeyword = request.get("nameKeyword");
+        log.info("Finding people with nameKeyword: {}", nameKeyword);
 
-		// Call friendService to find users
-		List<UserResponseDto> response = friendService
-				.findFriendsByName(userPhone, nameKeyword);
+        // Call friendService to get combined response
+        FindPeopleByNameKeywordResponse response = friendService.findPeopleByNameKeyword(userPhone, nameKeyword);
 
-		if (response == null || response.isEmpty()) {
-			log.info("No users found for nameKeyword: {}", nameKeyword);
-			return ResponseEntity.notFound().build();
-		}
-		log.info("Returning {} users for phone: {}", response.size(),
-				userPhone);
-		return ResponseEntity.ok(response);
+        // If result is null then return an empty object
+        if (response == null ||
+                (response.getFriends().isEmpty()
+                        && response.getOthersWithSharedGroups().isEmpty()
+                        && response.getContacted().isEmpty())) {
+            log.info("No matching people found for nameKeyword: {}", nameKeyword);
+            return ResponseEntity.notFound().build();
+        }
 
-	}
+        log.info("Returning people search results for phone: {}", userPhone);
+        return ResponseEntity.ok(response);
+    }
 
 	// Endpoint tạo token (tạm thời)
 	@GetMapping("/generate-token")
