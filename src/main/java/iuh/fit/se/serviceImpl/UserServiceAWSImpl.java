@@ -145,20 +145,23 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 		log.info("User updated: {}", updatedUser);
 		String backgroundImg = user.getBackgroundImg();
 		String baseImg = user.getBaseImg();
-		try {
-			if (backgroundImg != null) {
 
+		try {
+			if (request.backgroundImg() != null) {
 				// xóa ảnh cũ
 				// backgroundImg là đường dẫn có dinh tới cloudfront
 				// awsService.deleteFromS3(backgroundImg);
-				awsService
-						.deleteFromS3(backgroundImg.replace(cloudfrontUrl, ""));
-
+				if (backgroundImg != null)
+					awsService.deleteFromS3(
+							backgroundImg.replace(cloudfrontUrl, ""));
 				backgroundImg = awsService.uploadToS3(request.backgroundImg());
 			}
-			if (baseImg != null) {
+			if (request.baseImg() != null) {
 
 				awsService.deleteFromS3(baseImg.replace(cloudfrontUrl, ""));
+				
+				if (baseImg != null)
+					awsService.deleteFromS3(baseImg.replace(cloudfrontUrl, ""));
 				baseImg = awsService.uploadToS3(request.baseImg());
 			}
 		} catch (Exception e) {
