@@ -11,4 +11,5 @@ public interface MessageNotifier {
     void notifyAllMessagesRead(String conversationId, String userId);
     void initConversation(ConversationDetailDto conversationDetail, String userId);
     void notifyNewConversation(ConversationDetailDto conversationDetail, String userId);
+    void notifyRemoveConversation(String conversationId, String userId);
 }

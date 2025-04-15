@@ -16,4 +16,6 @@ public interface ConversationService {
 	
 	void markAllMessagesAsRead(String conversationId, String userId);
 	
+	void deleteFriendConversation(String userId, String friendId);
+	
 }

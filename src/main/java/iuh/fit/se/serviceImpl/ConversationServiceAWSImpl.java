@@ -201,5 +201,39 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		messageNotifier.notifyAllMessagesRead(conversationId, userId);
 		log.info("All messages in conversation {} marked as read by user {}", conversationId, userId);
 	}
+	@Override
+	public void deleteFriendConversation(String userId, String friendId) {
+		// TODO Auto-generated method stub
+		String conversationId = userId + "_" + friendId;
+		User user = userRepository.findByPhone(userId);
+		if (user == null) {
+			log.warn("User with id {} not found", userId);
+			return;
+		}
+		User friend = userRepository.findByPhone(friendId);
+		if (friend == null) {
+			log.warn("User with id {} not found", friendId);
+			return;
+		}
+		Conversation conversation = conversationRepository.findById(conversationId);
+		if (conversation == null) {
+			conversation = conversationRepository.findById(friendId + "_" + userId);
+			if (conversation == null) {
+				log.warn("Conversation with id {} not found", conversationId);
+				return;
+			}
+		}
+		if (user.getConversations() != null) {
+			user.getConversations().remove(conversationId);
+		}
+		if (friend.getConversations() != null) {
+			friend.getConversations().remove(conversationId);
+		}
+		conversationRepository.deleteById(conversation.getId());
+		userRepository.save(user);
+		userRepository.save(friend);
+		messageNotifier.notifyRemoveConversation(conversationId, userId);
+		messageNotifier.notifyRemoveConversation(conversationId, friendId);
+	}
 
 }

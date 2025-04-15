@@ -94,6 +94,9 @@ public class FriendServiceAWSImpl implements FriendService {
             receiver.getPendings().add(senderPhoneNumber);
             userRepository.save(receiver);
         }
+        else {
+			throw new RuntimeException("Đã gửi lời mời kết bạn đến người này rồi!");
+		}
     }
 
     @Override
@@ -221,6 +224,37 @@ public class FriendServiceAWSImpl implements FriendService {
 		} else {
 			throw new RuntimeException("User not found");
 		}
+	}
+
+	@Override
+	public boolean isRequestPending(String userPhoneNumber,
+			String friendPhoneNumber) {
+		// TODO Auto-generated method stub
+		userPhoneNumber = formatPhoneNumber(userPhoneNumber);
+		friendPhoneNumber = formatPhoneNumber(friendPhoneNumber);
+		User user = userRepository.findByPhone(friendPhoneNumber);
+		if (user == null) {
+			throw new RuntimeException("Không tìm thấy user: " + userPhoneNumber);
+		}
+		
+		return user.getPendings().contains(userPhoneNumber);
+	}
+	
+	@Override
+	public boolean isFriend(String userPhoneNumber, String friendPhoneNumber) {
+		// TODO Auto-generated method stub
+		userPhoneNumber = formatPhoneNumber(userPhoneNumber);
+		friendPhoneNumber = formatPhoneNumber(friendPhoneNumber);
+		User user = userRepository.findByPhone(userPhoneNumber);
+		User friend = userRepository.findByPhone(friendPhoneNumber);
+		if (user == null) {
+			throw new RuntimeException("Không tìm thấy user: " + userPhoneNumber);
+		}
+		if (friend == null) {
+			throw new RuntimeException("Không tìm thấy bạn: " + friendPhoneNumber);
+		}
+		
+		return user.getFriends().contains(friendPhoneNumber) && friend.getFriends().contains(userPhoneNumber);
 	}
 
 }
