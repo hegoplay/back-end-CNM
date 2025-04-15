@@ -2,6 +2,7 @@ package iuh.fit.se.controller;
 
 import java.util.List;
 
+import iuh.fit.se.model.dto.search.FindPeopleByNameKeywordResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -125,29 +126,33 @@ public class FriendController {
     }
 
 
-    @PostMapping("/find-friends-by-name-keyword")
-    public ResponseEntity<List<UserResponseDto>> findFriendsByNameKeyword(
+    @PostMapping("/find-people-by-name-keyword")
+    public ResponseEntity<FindPeopleByNameKeywordResponse> findPeopleByNameKeyword(
             @RequestHeader("Authorization") String authHeader,
-            @RequestBody Map<String, String> request){
-//        {
-//            "nameKeyword" : "Manh"
-//        }
+            @RequestBody Map<String, String> request) {
+//    {
+//        "nameKeyword" : "Manh"
+//    }
         String jwt = authHeader.substring(7);
         String userPhone = jwtUtils.getPhoneFromToken(jwt);
 
         String nameKeyword = request.get("nameKeyword");
-        log.info("Finding users with nameKeyword: {}", nameKeyword);
+        log.info("Finding people with nameKeyword: {}", nameKeyword);
 
+        // Call friendService to get combined response
+        FindPeopleByNameKeywordResponse response = friendService.findPeopleByNameKeyword(userPhone, nameKeyword);
 
-        //Call friendService to find users
-        List<UserResponseDto> response = friendService.findFriendsByName(userPhone, nameKeyword);
-
-        if (response == null || response.isEmpty()) {
-            log.info("No users found for nameKeyword: {}", nameKeyword);
+        // If result is null then return an empty object
+        if (response == null ||
+                (response.getFriends().isEmpty()
+                        && response.getOthersWithSharedGroups().isEmpty()
+                        && response.getContacted().isEmpty())) {
+            log.info("No matching people found for nameKeyword: {}", nameKeyword);
             return ResponseEntity.notFound().build();
         }
-        log.info("Returning {} users for phone: {}", response.size(), userPhone);
-        return ResponseEntity.ok(response);
 
+        log.info("Returning people search results for phone: {}", userPhone);
+        return ResponseEntity.ok(response);
     }
+
 }
