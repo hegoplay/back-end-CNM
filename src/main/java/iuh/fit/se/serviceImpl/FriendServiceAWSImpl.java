@@ -71,12 +71,12 @@ public class FriendServiceAWSImpl implements FriendService {
                 matchedFriends.add(friendInfo);
 
                 // Sample: Add to matchedOthersWithSharedGroups with dummy group name
-                List<String> dummyGroups = new ArrayList<>();
-                dummyGroups.add("same group");
-                matchedOthersWithSharedGroups.add(new FindPeopleByNameKeywordResponse.UserWithSharedGroups(friendInfo, dummyGroups));
-
-                // Sample: Add to matchedContacted
-                matchedContacted.add(friendInfo);
+//                List<String> dummyGroups = new ArrayList<>();
+//                dummyGroups.add("same group");
+//                matchedOthersWithSharedGroups.add(new FindPeopleByNameKeywordResponse.UserWithSharedGroups(friendInfo, dummyGroups));
+//
+//                // Sample: Add to matchedContacted
+//                matchedContacted.add(friendInfo);
             }
         }
 

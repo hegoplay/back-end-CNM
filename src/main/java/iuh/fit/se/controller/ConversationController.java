@@ -59,14 +59,15 @@ public class ConversationController {
 		}
 		return ResponseEntity.ok(conversation);
 	}
+//	request thang nay để gửi event để nhận dữ liệu currentConversation
 	@GetMapping("/initialize/{conversationId}")
-	public ResponseEntity<Void> markNotificationAsRead(@PathVariable String conversationId, @RequestHeader("Authorization") String authHeader) {
+	public ResponseEntity<ConversationDetailDto> markNotificationAsRead(@PathVariable String conversationId, @RequestHeader("Authorization") String authHeader) {
 		log.info("Marking notification as read for conversation: {}", conversationId);
 		String jwt = authHeader.substring(7);
 		String phone = jwtUtils.getPhoneFromToken(jwt);
 		ConversationDetailDto conversation = conversationService.getConversationDetail(conversationId);
 		messageNotifier.initConversation(conversation, phone);
-		return ResponseEntity.ok().build();
+		return ResponseEntity.ok(conversation);
 	}
 	@PostMapping("/mark-as-read/{conversationId}")
 	public ResponseEntity<Void> markAllMessagesAsRead(@PathVariable String conversationId, @RequestHeader("Authorization") String authHeader) {
