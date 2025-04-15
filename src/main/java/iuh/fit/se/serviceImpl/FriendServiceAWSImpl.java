@@ -132,6 +132,8 @@ public class FriendServiceAWSImpl implements FriendService {
             sender.getFriends().add(receiverPhoneNumber);
         }
 
+        log.info("Đã thêm bạn thành công: {} và {}", senderPhoneNumber, receiverPhoneNumber);
+        
         userRepository.save(receiver);
         userRepository.save(sender);
     }

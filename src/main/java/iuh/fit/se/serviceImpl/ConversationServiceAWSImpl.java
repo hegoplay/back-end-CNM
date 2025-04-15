@@ -48,6 +48,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 	@Override
 	public void createFriendConversation(String userPhone, String friendPhone) {
 		// TODO Auto-generated method stub
+		log.info("Start creating conversation");
 		User user = userRepository.findByPhone(userPhone);
 		if (user == null) {
 			log.warn("User with id {} not found", userPhone);
