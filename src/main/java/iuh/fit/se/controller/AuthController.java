@@ -78,10 +78,10 @@ public class AuthController {
      * success or not
      */
     @PostMapping("/send-otp")
-    public ResponseEntity<Map<String, Boolean>> sendOtp(@RequestBody String phone) {
+    public ResponseEntity<Map<String, Boolean>> sendOtp(@RequestBody PhoneObj phone) {
 //        log.info("OTP sent: {}", request.getPhone());
         Map<String, Boolean> response = new HashMap<>();
-        awsService.sendOtp(phone);
+        awsService.sendOtp(phone.phone);
         response.put("success", true);
         return ResponseEntity.ok(response);
     }

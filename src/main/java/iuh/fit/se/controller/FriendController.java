@@ -40,19 +40,19 @@ public class FriendController {
 		
 	}
 	
-	@PostMapping("/accept")
-	public ResponseEntity<Void> addFriend(@RequestHeader("Authorization") String authHeader, @RequestBody PhoneObj friendPhone) {
-		// Kiểm tra header và loại bỏ prefix "Bearer " nếu có
-		String jwt = authHeader.substring(7);
-		
-		// Lấy phone từ token
-		String phone = jwtUtils.getPhoneFromToken(jwt);
-		
-		userService.acceptRequest(phone, friendPhone.phone);
-		conversationService.createFriendConversation(phone, friendPhone.phone);
-		
-		return ResponseEntity.ok().build();
-	}
+//	@PostMapping("/accept")
+//	public ResponseEntity<Void> addFriend(@RequestHeader("Authorization") String authHeader, @RequestBody PhoneObj friendPhone) {
+//		// Kiểm tra header và loại bỏ prefix "Bearer " nếu có
+//		String jwt = authHeader.substring(7);
+//		
+//		// Lấy phone từ token
+//		String phone = jwtUtils.getPhoneFromToken(jwt);
+//		
+//		userService.acceptRequest(phone, friendPhone.phone);
+//		conversationService.createFriendConversation(phone, friendPhone.phone);
+//		
+//		return ResponseEntity.ok().build();
+//	}
 	
 //	@GetMapping("/")
 //	public ResponseEntity<List<UserResponseDto>> getFriends(@RequestHeader("Authorization") String authHeader) {
@@ -177,6 +177,7 @@ public class FriendController {
 			String receiverPhoneNumber = extractPhoneNumberFromToken(authorizationHeader);
 			log.info("User {} is accepting friend request from {}", receiverPhoneNumber, senderPhoneNumber);
 			friendService.acceptFriendRequest(receiverPhoneNumber, senderPhoneNumber);
+			conversationService.createFriendConversation(receiverPhoneNumber, senderPhoneNumber);
 			return ResponseEntity.ok("Friend request accepted successfully");
 		} catch (Exception e) {
 			log.error("Error accepting friend request: {}", e.getMessage());
