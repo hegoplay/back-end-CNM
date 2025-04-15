@@ -207,4 +207,20 @@ public class FriendServiceAWSImpl implements FriendService {
         userRepository.save(friend);
     }
 
+	@Override
+	public List<UserResponseDto> getFriendRequests(String phone) {
+		// TODO Auto-generated method stub
+		phone = formatPhoneNumber(phone);
+		User user = userRepository.findByPhone(phone);
+		if (user != null) {
+			List<UserResponseDto> friendRequests = user.getPendings().stream()
+					.map(friendPhone -> UserMapper.INSTANCE.toUserResponseDto(
+							userRepository.findByPhone(friendPhone)))
+					.toList();
+			return friendRequests;
+		} else {
+			throw new RuntimeException("User not found");
+		}
+	}
+
 }

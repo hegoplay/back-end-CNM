@@ -131,7 +131,6 @@ public class AuthController {
     
     @PostMapping("/register")
     public ResponseEntity<RegisterResponse> register(@ModelAttribute RegisterRequest request) throws Exception {
-        log.info(request.toString());
         String avatarUrl = awsService.uploadToS3(request.getAvatar());
         userService.createUser(request, avatarUrl);
         RegisterResponse response = new RegisterResponse();
