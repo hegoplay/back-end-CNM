@@ -20,6 +20,7 @@ import iuh.fit.se.model.dto.friend.SendFriendRequestDto;
 import iuh.fit.se.service.ConversationService;
 import iuh.fit.se.service.FriendService;
 import iuh.fit.se.service.UserService;
+import iuh.fit.se.util.FormatUtils;
 import iuh.fit.se.util.JwtUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -144,6 +145,7 @@ public class FriendController {
 		try {
 			String senderPhoneNumber = extractPhoneNumberFromToken(
 					authorizationHeader);
+			senderPhoneNumber = FormatUtils.formatPhoneNumber(senderPhoneNumber);
 			log.info("User {} is sending friend request to {}",
 					senderPhoneNumber, receiverPhoneNumber);
 			friendService.sendFriendRequest(senderPhoneNumber,
@@ -163,9 +165,13 @@ public class FriendController {
 		try {
 			String receiverPhoneNumber = extractPhoneNumberFromToken(
 					authorizationHeader);
+			senderPhoneNumber = FormatUtils.formatPhoneNumber(senderPhoneNumber);
 			log.info("User {} is accepting friend request from {}",
 					receiverPhoneNumber, senderPhoneNumber);
 			friendService.acceptFriendRequest(receiverPhoneNumber,
+					senderPhoneNumber);
+			
+			conversationService.createFriendConversation(receiverPhoneNumber,
 					senderPhoneNumber);
 			return ResponseEntity.ok("Friend request accepted successfully");
 		} catch (Exception e) {
@@ -182,9 +188,12 @@ public class FriendController {
 		try {
 			String senderPhoneNumber = extractPhoneNumberFromToken(
 					authorizationHeader);
+			receiverPhoneNumber = FormatUtils.formatPhoneNumber(receiverPhoneNumber);
 			log.info("User {} is canceling friend request to {}",
 					senderPhoneNumber, receiverPhoneNumber);
 			friendService.cancelFriendRequest(senderPhoneNumber,
+					receiverPhoneNumber);
+			conversationService.deleteFriendConversation(senderPhoneNumber,
 					receiverPhoneNumber);
 			return ResponseEntity.ok("Friend request canceled successfully");
 		} catch (Exception e) {
@@ -202,6 +211,7 @@ public class FriendController {
 			// Lấy số điện thoại người nhận từ Token
 			String receiverPhoneNumber = extractPhoneNumberFromToken(
 					authorizationHeader);
+			senderPhoneNumber = FormatUtils.formatPhoneNumber(senderPhoneNumber);
 			log.info("User {} is rejecting friend request from {}",
 					receiverPhoneNumber, senderPhoneNumber);
 
@@ -224,6 +234,7 @@ public class FriendController {
 		try {
 			String userPhoneNumber = extractPhoneNumberFromToken(
 					authorizationHeader);
+			friendPhoneNumber = FormatUtils.formatPhoneNumber(friendPhoneNumber);
 			log.info("User {} is removing friend {}", userPhoneNumber,
 					friendPhoneNumber);
 			friendService.removeFriend(userPhoneNumber, friendPhoneNumber);
