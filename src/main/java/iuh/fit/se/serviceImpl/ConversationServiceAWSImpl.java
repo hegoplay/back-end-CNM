@@ -43,7 +43,6 @@ public class ConversationServiceAWSImpl implements ConversationService {
 	private final DynamoDbTable<User> userTable;
 	private final DynamoDbTable<Conversation> conversationTable;
 	private final DynamoDbEnhancedClient enhancedClient;
-	private final JwtUtils jwtUtils;
 	private final MessageNotifier messageNotifier;
 	
 	@Override
@@ -59,11 +58,14 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			log.warn("User with id {} not found", friendPhone);
 			return;
 		}
-		if(user.getConversations().contains(userPhone + "_" + friendPhone)) {
+		
+		String conversationId = userPhone + "_" + friendPhone;
+		
+		if(user.getConversations().contains(conversationId)) {
 			log.warn("Conversation already exists");
 			return;
 		}
-		if(friend.getConversations().contains(userPhone + "_" + friendPhone)) {
+		if(friend.getConversations().contains(conversationId)) {
 			log.warn("Conversation already exists");
 			return;
 		}
@@ -75,8 +77,8 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			friend.setConversations(new ArrayList<>());
 		}
 		
-		user.getConversations().add(userPhone + "_" + friendPhone);
-		friend.getConversations().add(userPhone + "_" + friendPhone);
+		user.getConversations().add(conversationId);
+		friend.getConversations().add(conversationId);
 		
 		Conversation conversation = Conversation.builder()
 						.id(userPhone + "_" + friendPhone)
@@ -94,6 +96,9 @@ public class ConversationServiceAWSImpl implements ConversationService {
 	            .addPutItem(userTable, user)
 	            .addPutItem(userTable, friend)
 	        );
+	        log.info("Transaction completed successfully");
+	        ConversationDetailDto conversationDetailDto = getConversationDetail(conversationId);
+	        messageNotifier.initConversation(conversationDetailDto, conversationId);
 	    } catch (TransactionCanceledException e) {
 	        log.error("Transaction cancelled: {}", e.cancellationReasons());
 	        throw new RuntimeException("Transaction failed", e);

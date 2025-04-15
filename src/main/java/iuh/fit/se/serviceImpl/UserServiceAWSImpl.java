@@ -36,8 +36,9 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 	private String cloudfrontUrl;
 
 	private final DynamoDbClient dynamoDbClient;
-	private final AwsService awsService;//	private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
-//	private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
+	private final AwsService awsService;// private final DynamoDbEnhancedClient
+										// dynamoDbEnhancedClient;
+	// private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
 	private final PasswordEncoder passwordEncoder;
 	private final UserRepository userRepository;
 	private final JwtUtils jwtUtils;
@@ -59,17 +60,26 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 	}
 
 	@Override
-	public void createUser(iuh.fit.se.model.dto.auth.RegisterRequest request, String avatarUrl) {
+	public void createUser(iuh.fit.se.model.dto.auth.RegisterRequest request,
+			String avatarUrl) {
 
 		log.info("register user: {}", request);
 
 		User user = User.builder().phoneNumber(request.getPhone())
-				.password(passwordEncoder.encode(request.getPassword()).toString()).baseImg(avatarUrl)
-				.isMale(request.isGender()).dateOfBirth(request.getDateOfBirth()).name(request.getName())
-				.status("offline").isOnline(false).createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now())
-				.requestList(new java.util.ArrayList<>()).friends(new java.util.ArrayList<>())
-				.pendings(new java.util.ArrayList<>()).mutedConversation(new java.util.ArrayList<>())
-				.currentCallId(null).callSettings(new User.CallSettings(false, false, false, false)).build();
+				.password(passwordEncoder.encode(request.getPassword())
+						.toString())
+				.baseImg(avatarUrl).isMale(request.isGender())
+				.conversations(new java.util.ArrayList<>())
+				.dateOfBirth(request.getDateOfBirth()).name(request.getName())
+				.status("offline").isOnline(false)
+				.createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now())
+				.requestList(new java.util.ArrayList<>())
+				.friends(new java.util.ArrayList<>())
+				.pendings(new java.util.ArrayList<>())
+				.mutedConversation(new java.util.ArrayList<>())
+				.currentCallId(null)
+				.callSettings(new User.CallSettings(false, false, false, false))
+				.build();
 
 		log.info("User created: {}", user);
 		userRepository.save(user);
@@ -78,13 +88,14 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 	@Override
 	public LoginResponse login(LoginRequest request) {
 		// TODO Auto-generated method stub
-//		return null;
+		// return null;
 		User user = userRepository.findByPhone(request.getPhone());
 		if (user == null) {
 			return null;
 		}
 
-		if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+		if (!passwordEncoder.matches(request.getPassword(),
+				user.getPassword())) {
 			return null;
 		}
 
@@ -95,7 +106,8 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 
 		userRepository.save(user);
 
-		return new LoginResponse(request.getPhone(), jwtUtils.generateTokenFromPhone(request.getPhone()));
+		return new LoginResponse(request.getPhone(),
+				jwtUtils.generateTokenFromPhone(request.getPhone()));
 	}
 
 	@Override
@@ -121,28 +133,31 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 	}
 
 	@Override
-	public UserResponseDto updateUserInfo(String phone, UserUpdateRequest request) {
+	public UserResponseDto updateUserInfo(String phone,
+			UserUpdateRequest request) {
 		// TODO Auto-generated method stub
 		User user = userRepository.findByPhone(phone);
 		if (user == null) {
 			throw new RuntimeException("User not found");
 		}
-		User updatedUser = UserMapper.INSTANCE.fromUserUpdateRequestMapToUser(request, user);
+		User updatedUser = UserMapper.INSTANCE
+				.fromUserUpdateRequestMapToUser(request, user);
 		log.info("User updated: {}", updatedUser);
 		String backgroundImg = user.getBackgroundImg();
 		String baseImg = user.getBaseImg();
 		try {
 			if (request.backgroundImg() != null) {
-				
-//				xóa ảnh cũ
-//				backgroundImg là đường dẫn có dinh tới cloudfront
-//				awsService.deleteFromS3(backgroundImg);
-				awsService.deleteFromS3(backgroundImg.replace(cloudfrontUrl, ""));
-				
+
+				// xóa ảnh cũ
+				// backgroundImg là đường dẫn có dinh tới cloudfront
+				// awsService.deleteFromS3(backgroundImg);
+				awsService
+						.deleteFromS3(backgroundImg.replace(cloudfrontUrl, ""));
+
 				backgroundImg = awsService.uploadToS3(request.backgroundImg());
 			}
 			if (request.baseImg() != null) {
-				
+
 				awsService.deleteFromS3(baseImg.replace(cloudfrontUrl, ""));
 				baseImg = awsService.uploadToS3(request.baseImg());
 			}
@@ -155,25 +170,28 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 		updatedUser.setBackgroundImg(backgroundImg);
 		updatedUser.setBaseImg(baseImg);
 		userRepository.save(updatedUser);
-		UserResponseDto dto = UserMapper.INSTANCE.toUserResponseDto(updatedUser);
+		UserResponseDto dto = UserMapper.INSTANCE
+				.toUserResponseDto(updatedUser);
 		log.info("User response: {}", dto);
 		return dto;
-		
-		
+
 	}
 
 	@Override
-	public UserResponseDto updateUserInfo(String phone, UserUpdateRequestJSON request) {
+	public UserResponseDto updateUserInfo(String phone,
+			UserUpdateRequestJSON request) {
 		// TODO Auto-generated method stub
 		User user = userRepository.findByPhone(phone);
 		if (user == null) {
 			throw new RuntimeException("User not found");
 		}
-		User updatedUser = UserMapper.INSTANCE.fromUserUpdateRequestJSONMapToUser(request, user);
+		User updatedUser = UserMapper.INSTANCE
+				.fromUserUpdateRequestJSONMapToUser(request, user);
 		log.info("User updated: {}", updatedUser);
 		updatedUser.setUpdatedAt(LocalDateTime.now());
 		userRepository.save(updatedUser);
-		UserResponseDto dto = UserMapper.INSTANCE.toUserResponseDto(updatedUser);
+		UserResponseDto dto = UserMapper.INSTANCE
+				.toUserResponseDto(updatedUser);
 		log.info("User response: {}", dto);
 		return dto;
 	}
@@ -187,12 +205,10 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 			user.setStatus(status);
 			user.setUpdatedAt(LocalDateTime.now());
 			userRepository.save(user);
-		}
-		else {
+		} else {
 			throw new RuntimeException("User not found");
 		}
 	}
-	
 
 	@Override
 	public void deleteUser(String phone) {
@@ -241,10 +257,12 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 			String phoneNumber = jwtUtils.getPhoneFromToken(token);
 			log.info("Extracted phone number from token: {}", phoneNumber);
 
-			User user = userTable.getItem(r -> r.key(k -> k.partitionValue(phoneNumber)));
+			User user = userTable
+					.getItem(r -> r.key(k -> k.partitionValue(phoneNumber)));
 
 			if (user == null) {
-				log.warn("User with phone number {} not found in database.", phoneNumber);
+				log.warn("User with phone number {} not found in database.",
+						phoneNumber);
 			} else {
 				log.info("User found: {}", user);
 			}
@@ -262,11 +280,11 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 		User user = userRepository.findByPhone(phone);
 		if (user != null) {
 			List<UserResponseDto> friends = user.getFriends().stream()
-					.map(friendPhone -> UserMapper.INSTANCE.toUserResponseDto(userRepository.findByPhone(friendPhone)))
+					.map(friendPhone -> UserMapper.INSTANCE.toUserResponseDto(
+							userRepository.findByPhone(friendPhone)))
 					.toList();
 			return friends;
-		}
-		else {
+		} else {
 			throw new RuntimeException("User not found");
 		}
 	}

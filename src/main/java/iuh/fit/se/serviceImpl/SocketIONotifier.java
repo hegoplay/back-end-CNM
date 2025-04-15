@@ -72,6 +72,8 @@ public class SocketIONotifier implements MessageNotifier {
                 "conversationId", conversationId
             ));
     }
+    
+    
 
     @Override
     public void initConversation(ConversationDetailDto conversationDetail, String userId) {
@@ -109,5 +111,21 @@ public class SocketIONotifier implements MessageNotifier {
 	        } else {
 	            log.warn("No client found for userId: {}", userId);
 	        }
+	}
+
+	@Override
+	public void notifyNewConversation(ConversationDetailDto conversationDetail,
+			String userId) {
+		// TODO Auto-generated method stub
+		log.info("Notifying new conversation: conversationId = {}, userId = {}", 
+				conversationDetail.getId(), userId);
+		SocketIOClient client = userClientMap.get(userId);
+		log.info("Map: {}", userClientMap);
+		if (client != null) {
+			client.sendEvent("new_conversation", conversationDetail);
+		} else {
+			log.warn("No client found for userId: {}", userId);
+		}
+		
 	}
 }

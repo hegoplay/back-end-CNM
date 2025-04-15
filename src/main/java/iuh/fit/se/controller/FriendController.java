@@ -39,26 +39,6 @@ public class FriendController {
 	private record PhoneObj (String phone){
 		
 	}
-	
-//	@PostMapping("/accept")
-//	public ResponseEntity<Void> addFriend(@RequestHeader("Authorization") String authHeader, @RequestBody PhoneObj friendPhone) {
-//		// Kiểm tra header và loại bỏ prefix "Bearer " nếu có
-//		String jwt = authHeader.substring(7);
-//		
-//		// Lấy phone từ token
-//		String phone = jwtUtils.getPhoneFromToken(jwt);
-//		
-//		userService.acceptRequest(phone, friendPhone.phone);
-//		conversationService.createFriendConversation(phone, friendPhone.phone);
-//		
-//		return ResponseEntity.ok().build();
-//	}
-	
-//	@GetMapping("/")
-//	public ResponseEntity<List<UserResponseDto>> getFriends(@RequestHeader("Authorization") String authHeader) {
-//
-//    FriendService friendService;
-//    JwtUtils jwtUtils;
 
 
     @PostMapping("/try-to-search")
@@ -233,18 +213,20 @@ public class FriendController {
 			return ResponseEntity.badRequest().body(e.getMessage());
 		}
 	}
+	
+	@GetMapping("/get-friend-requests")
+	public ResponseEntity<List<UserResponseDto>> getFriendRequests(@RequestHeader("Authorization") String authorizationHeader) {
+		try {
+			String userPhoneNumber = extractPhoneNumberFromToken(authorizationHeader);
+			log.info("User {} is getting friend requests", userPhoneNumber);
+			List<UserResponseDto> friendRequests = friendService.getFriendRequests(userPhoneNumber);
+			return ResponseEntity.ok(friendRequests);
+		} catch (Exception e) {
+			log.error("Error getting friend requests: {}", e.getMessage());
+			return ResponseEntity.badRequest().body(null);
+		}
+	}
 
-//    private String extractPhoneNumberFromToken(String authorizationHeader) {
-//        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-//            throw new RuntimeException("Invalid or missing Authorization header");
-//        }
-//        String token = authorizationHeader.substring(7);
-//        String phoneNumber = jwtUtils.getPhoneFromToken(token); 
-//        if (phoneNumber == null) {
-//            throw new RuntimeException("Invalid token: phoneNumber not found");
-//        }
-//        return phoneNumber;
-//    }
 	private String extractPhoneNumberFromToken(String authorizationHeader) {
 		if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
 			log.error("Invalid or missing Authorization header: {}", authorizationHeader);

@@ -9,6 +9,9 @@ public interface FriendService {
     List<UserResponseDto> findPersonByPhone(String phone);
 
     List<UserResponseDto> findFriendsByName(String userPhone, String nameKeyword);
+    
+//  Lấy danh ách lời mời kết bạn
+    List<UserResponseDto> getFriendRequests(String phone);
 
     // Gửi lời mời kết bạn
     void sendFriendRequest(String senderPhoneNumber, String receiverPhoneNumber);
@@ -24,4 +27,6 @@ public interface FriendService {
     
     // Xóa bạn
     void removeFriend(String userPhoneNumber, String friendPhoneNumber);
+    
+    
 }
