@@ -20,7 +20,7 @@ import java.util.Map;
 @Slf4j
 public class NgrokService {
 
-    @Value("${app.usingDynamicPort:true}")
+    @Value("${app.usingDynamicPort:false}")
     private boolean usingDynamicPort;
 
     private final ServerProperties serverProperties;

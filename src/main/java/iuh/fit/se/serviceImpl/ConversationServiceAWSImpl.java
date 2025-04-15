@@ -146,6 +146,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 //				log.warn("Conversation with id {} not found", conversationId);
 			throw new RuntimeException("Conversation not found");
 		}
+		log.info(conversation.toString());
 		ConversationDetailDto conversationDetailDto = ConversationMapper.INSTANCE.fromConversationToDetailDto(conversation);
 		
 		log.info("Conversation detail: {}", conversationDetailDto);
@@ -161,8 +162,6 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		
 		
 		conversationDetailDto.setMessageDetails((messages));
-		
-		messageNotifier.initConversation(conversationDetailDto, conversationId);
 		
 		return conversationDetailDto;
 	}
