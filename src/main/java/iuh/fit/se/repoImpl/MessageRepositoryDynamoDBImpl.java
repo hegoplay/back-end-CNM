@@ -137,7 +137,7 @@ public class MessageRepositoryDynamoDBImpl implements iuh.fit.se.repo.MessageRep
                 .build());
             QueryEnhancedRequest request = QueryEnhancedRequest.builder()
                 .queryConditional(queryConditional)
-                .scanIndexForward(false) // Sắp xếp giảm dần theo createdAt (mới nhất trước)
+                .scanIndexForward(true) // Sắp xếp tăng dần theo createdAt (cũ nhất trước)
                 .build();
 
             DynamoDbIndex<Message> index = messageTable.index(indexName);

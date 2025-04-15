@@ -162,7 +162,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		
 		conversationDetailDto.setMessageDetails((messages));
 		
-		messageNotifier.initConversation(conversationDetailDto, conversationId);
+//		messageNotifier.initConversation(conversationDetailDto, conversationId);
 		
 		return conversationDetailDto;
 	}
