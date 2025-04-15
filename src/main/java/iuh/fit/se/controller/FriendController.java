@@ -193,8 +193,8 @@ public class FriendController {
 					senderPhoneNumber, receiverPhoneNumber);
 			friendService.cancelFriendRequest(senderPhoneNumber,
 					receiverPhoneNumber);
-			conversationService.deleteFriendConversation(senderPhoneNumber,
-					receiverPhoneNumber);
+//			conversationService.deleteFriendConversation(senderPhoneNumber,
+//					receiverPhoneNumber);
 			return ResponseEntity.ok("Friend request canceled successfully");
 		} catch (Exception e) {
 			log.error("Error canceling friend request: {}", e.getMessage());
@@ -202,7 +202,7 @@ public class FriendController {
 		}
 	}
 
-	// Từ chối lời mời kết bạn
+	// Hủy kết bạn
 	@DeleteMapping("/reject-request")
 	public ResponseEntity<String> rejectFriendRequest(
 			@RequestHeader("Authorization") String authorizationHeader,
@@ -218,7 +218,9 @@ public class FriendController {
 			// Gọi service xử lý từ chối
 			friendService.rejectFriendRequest(receiverPhoneNumber,
 					senderPhoneNumber);
-
+			// Xóa cuộc trò chuyện nếu có
+			conversationService.deleteFriendConversation(receiverPhoneNumber,
+					senderPhoneNumber);
 			return ResponseEntity.ok("Friend request rejected successfully");
 		} catch (Exception e) {
 			log.error("Error rejecting friend request: {}", e.getMessage());

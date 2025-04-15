@@ -154,19 +154,26 @@ public class FriendServiceAWSImpl implements FriendService {
         receiverPhoneNumber = formatPhoneNumber(receiverPhoneNumber);
 
         User receiver = userRepository.findByPhone(receiverPhoneNumber);
+        
         if (receiver == null) {
             throw new RuntimeException("Không tìm thấy người nhận: " + receiverPhoneNumber);
         }
 
-        if (receiver.getPendings().contains(senderPhoneNumber)) {
-            receiver.getPendings().remove(senderPhoneNumber);
-            userRepository.save(receiver);
+        
+        User sender = userRepository.findByPhone(senderPhoneNumber);
+        if (sender == null) {
+			throw new RuntimeException("Không tìm thấy người gửi: " + senderPhoneNumber);
+		}
+        
+        if (sender.getPendings().contains(receiverPhoneNumber)) {
+        	sender.getPendings().remove(receiverPhoneNumber);
+            userRepository.save(sender);
         } else {
             throw new RuntimeException("Không có lời mời kết bạn từ: " + senderPhoneNumber);
         }
     }
     
-    //Từ chối lời mời kết bạn
+    //Hủy kết bạn
     
     @Override
     public void rejectFriendRequest(String receiverPhoneNumber, String senderPhoneNumber) {
