@@ -1,5 +1,6 @@
 package iuh.fit.se.service;
 import iuh.fit.se.model.dto.UserResponseDto;
+import iuh.fit.se.model.dto.search.FindPeopleByNameKeywordResponse;
 
 import java.util.List;
 
@@ -8,7 +9,6 @@ public interface FriendService {
 
     List<UserResponseDto> findPersonByPhone(String phone);
 
-    List<UserResponseDto> findFriendsByName(String userPhone, String nameKeyword);
     
 //  Lấy danh ách lời mời kết bạn
     List<UserResponseDto> getFriendRequests(String phone);
@@ -34,5 +34,6 @@ public interface FriendService {
     // Kiểm tra xem đã là bạn hay chưa
     boolean isFriend(String userPhoneNumber, String friendPhoneNumber);
     
-    
+
+    FindPeopleByNameKeywordResponse findPeopleByNameKeyword(String userPhone, String nameKeyword);
 }
