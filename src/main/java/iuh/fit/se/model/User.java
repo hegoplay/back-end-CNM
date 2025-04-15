@@ -67,4 +67,12 @@ public class User {
 	public String getPhoneNumber() {
 		return phoneNumber;
 	}
+	
+	public void removeConversationId(String conversationId) {
+		if (conversations != null) {
+			conversations = conversations.stream()
+					.filter(id -> !id.equalsIgnoreCase(conversationId))
+					.toList();
+		}
+	}
 }

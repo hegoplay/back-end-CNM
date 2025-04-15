@@ -99,7 +99,8 @@ public class ConversationServiceAWSImpl implements ConversationService {
 	        );
 	        log.info("Transaction completed successfully");
 	        ConversationDetailDto conversationDetailDto = getConversationDetail(conversationId);
-	        messageNotifier.initConversation(conversationDetailDto, conversationId);
+	        messageNotifier.notifyNewConversation(conversationDetailDto, userPhone);
+	        messageNotifier.notifyNewConversation(conversationDetailDto, friendPhone);
 	    } catch (TransactionCanceledException e) {
 	        log.error("Transaction cancelled: {}", e.cancellationReasons());
 	        throw new RuntimeException("Transaction failed", e);
@@ -220,21 +221,27 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		if (conversation == null) {
 			conversation = conversationRepository.findById(friendId + "_" + userId);
 			if (conversation == null) {
+				
 				log.warn("Conversation with id {} not found", conversationId);
 				return;
 			}
 		}
 		if (user.getConversations() != null) {
-			user.getConversations().remove(conversationId);
+			log.info("User conversation {}", user.getConversations());
+//			log.info(conversationId);
+			user.removeConversationId(conversation.getId());
+			log.info("User conversation after delete {}", user.getConversations());
 		}
 		if (friend.getConversations() != null) {
-			friend.getConversations().remove(conversationId);
+			friend.removeConversationId(conversation.getId());;
 		}
+		
+		
 		conversationRepository.deleteById(conversation.getId());
 		userRepository.save(user);
 		userRepository.save(friend);
-		messageNotifier.notifyRemoveConversation(conversationId, userId);
-		messageNotifier.notifyRemoveConversation(conversationId, friendId);
+		messageNotifier.notifyRemoveConversation(conversation.getId(), userId);
+		messageNotifier.notifyRemoveConversation(conversation.getId(), friendId);
 	}
 
 }
