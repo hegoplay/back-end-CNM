@@ -17,7 +17,7 @@ public class FunctionTester implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        String phone = "+84376626025";
+        String phone = "+8409846532";
         String nameKeyword = "Who";
         List<UserResponseDto> results = friendServiceAWS.findFriendsByName(phone, nameKeyword);
 

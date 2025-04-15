@@ -11,8 +11,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -206,5 +208,37 @@ public class FriendServiceAWSImpl implements FriendService {
         userRepository.save(user);
         userRepository.save(friend);
     }
+//    @Override
+//    public Map<String, List<UserResponseDto>> getPendingRequests(String userPhone) {
+//        userPhone = formatPhoneNumber(userPhone);
+//        User currentUser = userRepository.findByPhone(userPhone);
+//        if (currentUser == null) {
+//            throw new RuntimeException("Không tìm thấy người dùng: " + userPhone);
+//        }
+//
+//        Map<String, List<UserResponseDto>> result = new HashMap<>();
+//
+//        // Lấy incoming requests (các yêu cầu gửi tới user)
+//        List<UserResponseDto> incomingRequests = new ArrayList<>();
+//        for (String senderPhone : currentUser.getPendings()) {
+//            User sender = userRepository.findByPhone(senderPhone);
+//            if (sender != null) {
+//                incomingRequests.add(UserMapper.INSTANCE.toUserResponseDto(sender));
+//            }
+//        }
+//        result.put("incomingRequests", incomingRequests);
+//
+//        // Lấy sent requests (các yêu cầu user đã gửi)
+//        List<UserResponseDto> sentRequests = new ArrayList<>();
+//        List<User> allUsers = userRepository.findAll();
+//        for (User otherUser : allUsers) {
+//            if (!otherUser.getPhone().equals(userPhone) && otherUser.getPendings().contains(userPhone)) {
+//                sentRequests.add(UserMapper.INSTANCE.toUserResponseDto(otherUser));
+//            }
+//        }
+//        result.put("sentRequests", sentRequests);
+//
+//        return result;
+//    }
 
 }

@@ -232,7 +232,25 @@ public class FriendController {
 			return ResponseEntity.badRequest().body(e.getMessage());
 		}
 	}
-
+//	// lấy danh sách các yêu cầu kết bạn đã gửi (
+//    @GetMapping("/pending-requests")
+//    public ResponseEntity<Map<String, List<UserResponseDto>>> getPendingRequests(
+//            @RequestHeader("Authorization") String authHeader) {
+//        try {
+//            String jwt = authHeader.substring(7);
+//            String userPhone = jwtUtils.getPhoneFromToken(jwt);
+//            log.info("Fetching pending requests for user: {}", userPhone);
+//
+//            Map<String, List<UserResponseDto>> response = friendService.getPendingRequests(userPhone);
+//            return ResponseEntity.ok(response);
+//        } catch (Exception e) {
+//            log.error("Error fetching pending requests: {}", e.getMessage());
+//            return ResponseEntity.badRequest().body(null);
+//        }
+//    }
+	
+	
+	
 //    private String extractPhoneNumberFromToken(String authorizationHeader) {
 //        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
 //            throw new RuntimeException("Invalid or missing Authorization header");
@@ -244,6 +262,8 @@ public class FriendController {
 //        }
 //        return phoneNumber;
 //    }
+	
+	
 	private String extractPhoneNumberFromToken(String authorizationHeader) {
 		if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
 			log.error("Invalid or missing Authorization header: {}", authorizationHeader);

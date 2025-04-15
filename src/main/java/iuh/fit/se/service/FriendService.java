@@ -2,6 +2,7 @@ package iuh.fit.se.service;
 import iuh.fit.se.model.dto.UserResponseDto;
 
 import java.util.List;
+import java.util.Map;
 
 public interface FriendService {
     List<UserResponseDto> getFriendsList(String phone);
@@ -24,4 +25,7 @@ public interface FriendService {
     
     // Xóa bạn
     void removeFriend(String userPhoneNumber, String friendPhoneNumber);
+
+//	Map<String, List<UserResponseDto>> getPendingRequests(String userPhone);
+    
 }
