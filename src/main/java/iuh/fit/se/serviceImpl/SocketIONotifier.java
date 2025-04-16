@@ -126,6 +126,7 @@ public class SocketIONotifier implements MessageNotifier {
 		} else {
 			log.warn("No client found for userId: {}", userId);
 		}
+		client.joinRoom(conversationDetail.getId());
 		
 	}
 

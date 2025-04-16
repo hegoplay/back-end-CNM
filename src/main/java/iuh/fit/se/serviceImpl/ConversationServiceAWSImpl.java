@@ -101,6 +101,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 	        ConversationDetailDto conversationDetailDto = getConversationDetail(conversationId);
 	        messageNotifier.notifyNewConversation(conversationDetailDto, userPhone);
 	        messageNotifier.notifyNewConversation(conversationDetailDto, friendPhone);
+	        
 	    } catch (TransactionCanceledException e) {
 	        log.error("Transaction cancelled: {}", e.cancellationReasons());
 	        throw new RuntimeException("Transaction failed", e);
