@@ -13,10 +13,9 @@ import iuh.fit.se.model.Message;
 import iuh.fit.se.model.dto.message.MessageRequestDTO;
 import iuh.fit.se.model.dto.message.MessageResponseDTO;
 
-@Mapper(uses = CallEventMapper.class)
+@Mapper(uses = CallEventMapper.class, componentModel = "spring")
 public interface MessageMapper {
 	
-	MessageMapper INSTANCE = Mappers.getMapper( MessageMapper.class );
 	
 	MessageResponseDTO toMessageResponseDto(Message user);
 	

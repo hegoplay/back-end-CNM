@@ -24,6 +24,7 @@ public class FriendServiceAWSImpl implements FriendService {
     // Injecting the repository
     private final FriendRespository friendRepository;
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     @Override
     public List<UserResponseDto> getFriendsList(String phone) {
@@ -31,7 +32,7 @@ public class FriendServiceAWSImpl implements FriendService {
         List<String> friendPhoneList = userRepository.findByPhone(phone).getFriends();
         for(String friendPhone : friendPhoneList) {
             User user = userRepository.findByPhone(friendPhone);
-            UserResponseDto dto = UserMapper.INSTANCE.toUserResponseDto(user);
+            UserResponseDto dto = userMapper.toUserResponseDto(user);
             friendsList.add(dto);
         }
         return friendsList;
@@ -42,7 +43,7 @@ public class FriendServiceAWSImpl implements FriendService {
         List<User> resultObjectList = friendRepository.findByPhone(phone);
         List<UserResponseDto> resultDtoList = new ArrayList<>();
         for(User user : resultObjectList) {
-            UserResponseDto dto = UserMapper.INSTANCE.toUserResponseDto(user);
+            UserResponseDto dto = userMapper.toUserResponseDto(user);
             resultDtoList.add(dto);
         }
         return resultDtoList;
@@ -67,7 +68,7 @@ public class FriendServiceAWSImpl implements FriendService {
             }
 
             if (friendUser.getName().contains(nameKeyword)) {
-                UserResponseDto friendInfo = UserMapper.INSTANCE.toUserResponseDto(friendUser);
+                UserResponseDto friendInfo = userMapper.toUserResponseDto(friendUser);
                 matchedFriends.add(friendInfo);
 
                 // Sample: Add to matchedOthersWithSharedGroups with dummy group name
@@ -245,7 +246,7 @@ public List<UserResponseDto> getFriendRequests(String phone) {
 	User user = userRepository.findByPhone(phone);
 	if (user != null) {
 		List<UserResponseDto> friendRequests = user.getPendings().stream()
-				.map(friendPhone -> UserMapper.INSTANCE.toUserResponseDto(
+				.map(friendPhone -> userMapper.toUserResponseDto(
 						userRepository.findByPhone(friendPhone)))
 				.toList();
 		return friendRequests;

@@ -1,5 +1,6 @@
 package iuh.fit.se.model.dto.message;
 
+import iuh.fit.se.model.dto.CustomLocalDateTimeSerializer;
 import iuh.fit.se.model.enumObj.MessageType;
 import lombok.Data;
 import java.time.LocalDate;
@@ -8,6 +9,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @Data
 public class MessageResponseDTO {
@@ -16,8 +18,9 @@ public class MessageResponseDTO {
     private String senderId;
     private String content;
     private MessageType type;
-    private String mediaUrl;
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+//    đang bị dư, đang kiểm tra lại
+//    private String mediaUrl;
+    @JsonSerialize(using = CustomLocalDateTimeSerializer.class) 
     private LocalDateTime createdAt;
     @JsonProperty("isRecalled")
     private boolean isRecalled;

@@ -35,6 +35,8 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 	@Value("${cloudfront.url}")
 	private String cloudfrontUrl;
 
+	private String bucketName = "zalas3bucket";
+
 	private final DynamoDbClient dynamoDbClient;
 	private final AwsService awsService;// private final DynamoDbEnhancedClient
 										// dynamoDbEnhancedClient;
@@ -44,6 +46,7 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 	private final JwtUtils jwtUtils;
 
 	private final DynamoDbTable<User> userTable;
+	private final UserMapper userMapper;
 
 	@Override
 	public boolean isExistPhone(String phone) {
@@ -128,7 +131,7 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 	public UserResponseDto getUserInfo(String phone) {
 		// TODO Auto-generated method stub
 		User user = userRepository.findByPhone(phone);
-		UserResponseDto dto = UserMapper.INSTANCE.toUserResponseDto(user);
+		UserResponseDto dto = userMapper.toUserResponseDto(user);
 		return dto;
 	}
 
@@ -140,7 +143,7 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 		if (user == null) {
 			throw new RuntimeException("User not found");
 		}
-		User updatedUser = UserMapper.INSTANCE
+		User updatedUser = userMapper
 				.fromUserUpdateRequestMapToUser(request, user);
 		log.info("User updated: {}", updatedUser);
 		String backgroundImg = user.getBackgroundImg();
@@ -173,7 +176,7 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 		updatedUser.setBackgroundImg(backgroundImg);
 		updatedUser.setBaseImg(baseImg);
 		userRepository.save(updatedUser);
-		UserResponseDto dto = UserMapper.INSTANCE
+		UserResponseDto dto = userMapper
 				.toUserResponseDto(updatedUser);
 		log.info("User response: {}", dto);
 		return dto;
@@ -188,12 +191,12 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 		if (user == null) {
 			throw new RuntimeException("User not found");
 		}
-		User updatedUser = UserMapper.INSTANCE
+		User updatedUser = userMapper
 				.fromUserUpdateRequestJSONMapToUser(request, user);
 		log.info("User updated: {}", updatedUser);
 		updatedUser.setUpdatedAt(LocalDateTime.now());
 		userRepository.save(updatedUser);
-		UserResponseDto dto = UserMapper.INSTANCE
+		UserResponseDto dto = userMapper
 				.toUserResponseDto(updatedUser);
 		log.info("User response: {}", dto);
 		return dto;
@@ -283,7 +286,7 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 		User user = userRepository.findByPhone(phone);
 		if (user != null) {
 			List<UserResponseDto> friends = user.getFriends().stream()
-					.map(friendPhone -> UserMapper.INSTANCE.toUserResponseDto(
+					.map(friendPhone -> userMapper.toUserResponseDto(
 							userRepository.findByPhone(friendPhone)))
 					.toList();
 			return friends;

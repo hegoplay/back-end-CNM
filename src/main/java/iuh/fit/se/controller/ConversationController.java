@@ -77,12 +77,12 @@ public class ConversationController {
 		conversationService.markAllMessagesAsRead(conversationId, phone);
 		return ResponseEntity.ok().build();
 	}
-//	@DeleteMapping("/{conversationId}")
-//	public ResponseEntity<Void> deleteConversation(@PathVariable String conversationId, @RequestHeader("Authorization") String authHeader) {
-//		log.info("Deleting conversation: {}", conversationId);
-//		String jwt = authHeader.substring(7);
-//		String phone = jwtUtils.getPhoneFromToken(jwt);
+	@DeleteMapping("/{conversationId}")
+	public ResponseEntity<Void> deleteConversation(@PathVariable String conversationId, @RequestHeader("Authorization") String authHeader) {
+		String jwt = authHeader.substring(7);
+		String phone = jwtUtils.getPhoneFromToken(jwt);
 //		conversationService.deleteFriendConversation(conversationId, phone);
-//		return ResponseEntity.ok().build();
-//	}
+		
+		return ResponseEntity.ok().build();
+	}
 }

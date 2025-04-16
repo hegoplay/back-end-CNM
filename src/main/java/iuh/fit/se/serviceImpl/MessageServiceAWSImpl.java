@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import iuh.fit.se.annotation.UpdateConversation;
 import iuh.fit.se.mapper.MessageMapper;
 import iuh.fit.se.model.Conversation;
 import iuh.fit.se.model.Message;
@@ -19,28 +20,33 @@ import iuh.fit.se.service.ConversationService;
 import iuh.fit.se.service.MessageNotifier;
 import iuh.fit.se.service.MessageService;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(makeFinal = true, level = lombok.AccessLevel.PRIVATE)
 @Slf4j
 public class MessageServiceAWSImpl implements MessageService {
-    private final MessageRepository messageRepository;
-    private final ConversationService conversationService;
-    private final ConversationRepository conversationRepository;
-    private final MessageNotifier messageNotifier; // Thay thế SocketIOService bằng interface
-    private final AwsService awsService;
+    MessageRepository messageRepository;
+    ConversationService conversationService;
+    ConversationRepository conversationRepository;
+    MessageNotifier messageNotifier; // Thay thế SocketIOService bằng interface
+    AwsService awsService;
+    MessageMapper messageMapper;
 
     @Override
+    @UpdateConversation
     public MessageResponseDTO sendTextMessage(MessageRequestDTO request) {
         validateMessageType(request, MessageType.TEXT);
         Message message = createAndSaveMessage(request);
         updateConversation(message);
         notifyParticipants(message);
-        return MessageMapper.INSTANCE.toMessageResponseDto(message);
+        return messageMapper.toMessageResponseDto(message);
     }
 
     @Override
+    @UpdateConversation
     public MessageResponseDTO sendMediaMessage(MessageRequestDTO request, MultipartFile mediaFile) {
         validateMessageType(request, MessageType.MEDIA);
         try {
@@ -49,13 +55,14 @@ public class MessageServiceAWSImpl implements MessageService {
             Message message = createAndSaveMessage(request);
             updateConversation(message);
             notifyParticipants(message);
-            return MessageMapper.INSTANCE.toMessageResponseDto(message);
+            return messageMapper.toMessageResponseDto(message);
         } catch (Exception e) {
             throw new RuntimeException("Failed to upload media file", e);
         }
     }
 
     @Override
+    @UpdateConversation
     public MessageResponseDTO sendFileMessage(MessageRequestDTO request, MultipartFile file) {
         try {
             validateMessageType(request, MessageType.FILE, MessageType.MEDIA);
@@ -64,13 +71,14 @@ public class MessageServiceAWSImpl implements MessageService {
             Message message = createAndSaveMessage(request);
             updateConversation(message);
             notifyParticipants(message);
-            return MessageMapper.INSTANCE.toMessageResponseDto(message);
+            return messageMapper.toMessageResponseDto(message);
         } catch (Exception e) {
             throw new RuntimeException("Failed to upload file", e);
         }
     }
 
     @Override
+    @UpdateConversation
     public MessageResponseDTO sendCallEventMessage(MessageRequestDTO request) {
         validateMessageType(request, MessageType.CALL);
         if (request.getCallEvent() == null) {
@@ -78,11 +86,12 @@ public class MessageServiceAWSImpl implements MessageService {
         }
         Message message = createAndSaveMessage(request);
         notifyParticipants(message);
-        return MessageMapper.INSTANCE.toMessageResponseDto(message);
+        return messageMapper.toMessageResponseDto(message);
     }
 
     @Override
-    public void recallMessage(String messageId, String userId) {
+    @UpdateConversation
+    public MessageResponseDTO recallMessage(String messageId, String userId) {
         Message message = messageRepository.findById(messageId)
                 .orElseThrow(() -> new RuntimeException("Message not found"));
 
@@ -99,9 +108,12 @@ public class MessageServiceAWSImpl implements MessageService {
         
         // Sử dụng MessageNotifier thay vì SocketIOService trực tiếp
         messageNotifier.notifyMessageRecalled(message.getConversationId(), messageId);
+        
+        return messageMapper.toMessageResponseDto(message);
     }
 
     @Override
+    @UpdateConversation
     public MessageResponseDTO reactToMessage(String messageId, String userId, String emoji) {
         Message message = messageRepository.findById(messageId)
                 .orElseThrow(() -> new RuntimeException("Message not found"));
@@ -127,7 +139,7 @@ public class MessageServiceAWSImpl implements MessageService {
         // Sử dụng MessageNotifier
         messageNotifier.notifyReactionAdded(message.getConversationId(), messageId, emoji, userId);
         
-        return MessageMapper.INSTANCE.toMessageResponseDto(message);
+        return messageMapper.toMessageResponseDto(message);
     }
 
     @Override
@@ -146,21 +158,21 @@ public class MessageServiceAWSImpl implements MessageService {
                 .map(messageRepository::findById)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .map(MessageMapper.INSTANCE::toMessageResponseDto)
+                .map(messageMapper::toMessageResponseDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     public MessageResponseDTO getMessageById(String messageId) {
         return messageRepository.findById(messageId)
-                .map(MessageMapper.INSTANCE::toMessageResponseDto)
+                .map(messageMapper::toMessageResponseDto)
                 .orElseThrow(() -> new RuntimeException("Message not found"));
     }
 
     private Message createAndSaveMessage(MessageRequestDTO request) {
         validateMessageRequest(request);
         
-        Message message = MessageMapper.INSTANCE.fromMessageRequestDto(request);
+        Message message = messageMapper.fromMessageRequestDto(request);
         
         // Set additional fields not mapped by MapStruct
         if (message.getId() == null) {
@@ -201,7 +213,7 @@ public class MessageServiceAWSImpl implements MessageService {
     }
 
     private void notifyParticipants(Message message) {
-        MessageResponseDTO response = MessageMapper.INSTANCE.toMessageResponseDto(message);
+        MessageResponseDTO response = messageMapper.toMessageResponseDto(message);
         messageNotifier.notifyNewMessage(response);
     }
     private void updateConversation(Message msg) {
@@ -230,7 +242,7 @@ public class MessageServiceAWSImpl implements MessageService {
 		
 		// messageNotifier.notifyMessageRead(message.getConversationId(), messageId, userId);
 		
-		return MessageMapper.INSTANCE.toMessageResponseDto(message);
+		return messageMapper.toMessageResponseDto(message);
 		
 	
 	}

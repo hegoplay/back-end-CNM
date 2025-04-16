@@ -9,7 +9,7 @@ import iuh.fit.se.model.dto.message.MessageResponseDTO;
 
 public interface MessageService {
 	MessageResponseDTO sendTextMessage(MessageRequestDTO request);
-    void recallMessage(String messageId, String userId);
+	MessageResponseDTO recallMessage(String messageId, String userId);
     MessageResponseDTO reactToMessage(String messageId, String userId, String emoji);
     List<MessageResponseDTO> getMessagesByConversation(String conversationId);
     MessageResponseDTO getMessageById(String messageId);

@@ -32,6 +32,11 @@ public class Conversation {
 	private LocalDateTime updatedAt;
 	private Boolean callInProgress;
 	private String currentCallId;
+//	updated
+	private String conversationName;
+	private String leader;
+	private List<String> admins;
+	private String conversationImgUrl;
 
 
 	@DynamoDbPartitionKey

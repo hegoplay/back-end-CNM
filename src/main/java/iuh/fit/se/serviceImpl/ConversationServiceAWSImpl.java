@@ -36,7 +36,6 @@ public class ConversationServiceAWSImpl implements ConversationService {
 
 	@Value("${aws.region}")
 	private String region;
-	private final PasswordEncoder passwordEncoder;
 	private final ConversationRepository conversationRepository;
 	private final MessageRepository messageRepository;
 	private final UserRepository userRepository;
@@ -44,6 +43,8 @@ public class ConversationServiceAWSImpl implements ConversationService {
 	private final DynamoDbTable<Conversation> conversationTable;
 	private final DynamoDbEnhancedClient enhancedClient;
 	private final MessageNotifier messageNotifier;
+	private final MessageMapper messageMapper;
+	private final ConversationMapper conversationMapper;
 	
 	@Override
 	public void createFriendConversation(String userPhone, String friendPhone) {
@@ -88,6 +89,10 @@ public class ConversationServiceAWSImpl implements ConversationService {
 						.participants(List.of(userPhone, friendPhone))
 						.createdAt(LocalDateTime.now())
 						.updatedAt(LocalDateTime.now())
+						.conversationName("ban")
+						.conversationImgUrl("xxx")
+						.leader(userPhone)
+						.admins(List.of(userPhone, friendPhone))
 						.messages(List.of())
 						.currentCallId(null)
 						.build();
@@ -130,7 +135,25 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			conversations.sort((c1, c2) -> c2.getUpdatedAt().compareTo(c1.getUpdatedAt()));
 			List<ConversationDto> conversationDtos = new ArrayList<>();
 			for (Conversation conversation : conversations) {
-				conversationDtos.add(ConversationMapper.INSTANCE.fromConversationToDto(conversation));
+				ConversationDto conversationDto = conversationMapper.fromConversationToDto(conversation);
+//		Thêm tin nhắn cuối vào conversationDto		
+				appendLastMessageIntoConversationDto(conversationDto);
+				String conversationId = conversation.getId();
+//				cài đặt lại conversation name và conversation img url
+				if (conversation.getType() == ConversationType.PRIVATE) {
+					String[] split = conversationId.split("_");
+					String otherUserId = split[0].equals(phone) ? split[1] : split[0];
+					User otherUser = userRepository.findByPhone(otherUserId);
+					if (otherUser != null) {
+						conversationDto.setConversationName(otherUser.getName());
+						conversationDto.setConversationImgUrl(otherUser.getBaseImg());
+					} else {
+						log.warn("User with id {} not found", otherUserId);
+					}
+				}
+				
+				
+				conversationDtos.add(conversationDto);
 			}
 			return conversationDtos;
 		} catch (Exception e) {
@@ -148,16 +171,15 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			throw new RuntimeException("Conversation not found");
 		}
 		log.info(conversation.toString());
-		ConversationDetailDto conversationDetailDto = ConversationMapper.INSTANCE.fromConversationToDetailDto(conversation);
+		ConversationDetailDto conversationDetailDto = conversationMapper.fromConversationToDetailDto(conversation);
 		
 		log.info("Conversation detail: {}", conversationDetailDto);
 		
-		List<String> messageIds = conversation.getMessages();
 		List<Message> messagesList = messageRepository.findMessagesByConversationId(conversationId);
 		List<MessageResponseDTO> messages = new ArrayList<>();
 		
 		for (Message message : messagesList) {
-			MessageResponseDTO messageResponseDTO = MessageMapper.INSTANCE.toMessageResponseDto(message);
+			MessageResponseDTO messageResponseDTO = messageMapper.toMessageResponseDto(message);
 			messages.add(messageResponseDTO);
 		}
 		
@@ -236,7 +258,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			friend.removeConversationId(conversation.getId());;
 		}
 		
-		
+		messageRepository.deleteMessagesByConversationId(conversation.getId());
 		conversationRepository.deleteById(conversation.getId());
 		userRepository.save(user);
 		userRepository.save(friend);
@@ -244,4 +266,17 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		messageNotifier.notifyRemoveConversation(conversation.getId(), friendId);
 	}
 
+	private void appendLastMessageIntoConversationDto(ConversationDto dto) {
+		if (dto.getMessages() == null || dto.getMessages().isEmpty()) {
+			dto.setLastMessage(null);
+			return;
+		}
+		String lastMessageId = dto.getMessages().get(dto.getMessages().size() - 1);
+		if (lastMessageId != null) {
+			Message lastMessage = messageRepository.getMessageById(lastMessageId);
+			MessageResponseDTO lastMessageDto = messageMapper.toMessageResponseDto(lastMessage);
+			dto.setLastMessage(lastMessageDto);
+		}
+	}
+	
 }

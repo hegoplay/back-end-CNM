@@ -33,13 +33,16 @@ public class Message {
     private String senderId;
     private String content;
     private MessageType type; // "text" | "media" | "call-event"
-    private String mediaUrl; // URL của media (ảnh, video, v.v.)
+//    private String mediaUrl; // URL của media (ảnh, video, v.v.) cái này bị dư, đang kiểm tra lại
+    
+    
     private List<String> seenBy; // Danh sách user đã xem
     private LocalDateTime createdAt;
     private boolean isRecalled; // Tin nhắn có bị thu hồi không
     private String replyTo; // Tin nhắn mà tin nhắn này trả lời (nullable)
     private List<Reaction> reactions; // Danh sách phản ứng
     private CallEvent callEvent; // Dữ liệu sự kiện cuộc gọi (nếu type là "call-event")
+    
 
     @Data
 	@lombok.NoArgsConstructor
