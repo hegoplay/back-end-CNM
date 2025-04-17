@@ -1,5 +1,6 @@
 package iuh.fit.se.repo;
 
+import java.util.List;
 import java.util.Optional;
 
 import iuh.fit.se.model.Message;
@@ -15,4 +16,8 @@ public interface MessageRepository {
 	void updateMessage(Message message);
 
 	void deleteMessage(String messageId);
+	
+	List<Message >findMessagesByConversationId(String conversationId);
+	
+	int countUnreadMessages(String conversationId, String userId);	
 }

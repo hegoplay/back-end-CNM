@@ -8,5 +8,8 @@ public interface MessageNotifier {
 //    thu hồi tin nhắn
     void notifyMessageRecalled(String conversationId, String messageId);
     void notifyReactionAdded(String conversationId, String messageId, String emoji, String userId);
+    void notifyAllMessagesRead(String conversationId, String userId);
     void initConversation(ConversationDetailDto conversationDetail, String userId);
+    void notifyNewConversation(ConversationDetailDto conversationDetail, String userId);
+    void notifyRemoveConversation(String conversationId, String userId);
 }

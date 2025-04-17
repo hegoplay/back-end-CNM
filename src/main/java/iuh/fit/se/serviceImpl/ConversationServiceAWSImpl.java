@@ -43,12 +43,12 @@ public class ConversationServiceAWSImpl implements ConversationService {
 	private final DynamoDbTable<User> userTable;
 	private final DynamoDbTable<Conversation> conversationTable;
 	private final DynamoDbEnhancedClient enhancedClient;
-	private final JwtUtils jwtUtils;
 	private final MessageNotifier messageNotifier;
 	
 	@Override
 	public void createFriendConversation(String userPhone, String friendPhone) {
 		// TODO Auto-generated method stub
+		log.info("Start creating conversation");
 		User user = userRepository.findByPhone(userPhone);
 		if (user == null) {
 			log.warn("User with id {} not found", userPhone);
@@ -59,11 +59,14 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			log.warn("User with id {} not found", friendPhone);
 			return;
 		}
-		if(user.getConversations().contains(userPhone + "_" + friendPhone)) {
+		
+		String conversationId = userPhone + "_" + friendPhone;
+		
+		if(user.getConversations().contains(conversationId)) {
 			log.warn("Conversation already exists");
 			return;
 		}
-		if(friend.getConversations().contains(userPhone + "_" + friendPhone)) {
+		if(friend.getConversations().contains(conversationId)) {
 			log.warn("Conversation already exists");
 			return;
 		}
@@ -75,8 +78,8 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			friend.setConversations(new ArrayList<>());
 		}
 		
-		user.getConversations().add(userPhone + "_" + friendPhone);
-		friend.getConversations().add(userPhone + "_" + friendPhone);
+		user.getConversations().add(conversationId);
+		friend.getConversations().add(conversationId);
 		
 		Conversation conversation = Conversation.builder()
 						.id(userPhone + "_" + friendPhone)
@@ -94,6 +97,10 @@ public class ConversationServiceAWSImpl implements ConversationService {
 	            .addPutItem(userTable, user)
 	            .addPutItem(userTable, friend)
 	        );
+	        log.info("Transaction completed successfully");
+	        ConversationDetailDto conversationDetailDto = getConversationDetail(conversationId);
+	        messageNotifier.notifyNewConversation(conversationDetailDto, userPhone);
+	        messageNotifier.notifyNewConversation(conversationDetailDto, friendPhone);
 	    } catch (TransactionCanceledException e) {
 	        log.error("Transaction cancelled: {}", e.cancellationReasons());
 	        throw new RuntimeException("Transaction failed", e);
@@ -144,14 +151,14 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		log.info("Conversation detail: {}", conversationDetailDto);
 		
 		List<String> messageIds = conversation.getMessages();
+		List<Message> messagesList = messageRepository.findMessagesByConversationId(conversationId);
 		List<MessageResponseDTO> messages = new ArrayList<>();
 		
-		for (String messageId : messageIds) {
-			Message message = messageRepository.getMessageById(messageId);
-			if (message != null) {
-				messages.add(MessageMapper.INSTANCE.toMessageResponseDto(message));
-			}
+		for (Message message : messagesList) {
+			MessageResponseDTO messageResponseDTO = MessageMapper.INSTANCE.toMessageResponseDto(message);
+			messages.add(messageResponseDTO);
 		}
+		
 		
 		conversationDetailDto.setMessageDetails((messages));
 		
@@ -193,8 +200,48 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			}
 		}
 		// Notify the user about the read status
-//		messageNotifier.notifyAllMessagesRead(conversationId, userId);
+		messageNotifier.notifyAllMessagesRead(conversationId, userId);
 		log.info("All messages in conversation {} marked as read by user {}", conversationId, userId);
+	}
+	@Override
+	public void deleteFriendConversation(String userId, String friendId) {
+		// TODO Auto-generated method stub
+		String conversationId = userId + "_" + friendId;
+		User user = userRepository.findByPhone(userId);
+		if (user == null) {
+			log.warn("User with id {} not found", userId);
+			return;
+		}
+		User friend = userRepository.findByPhone(friendId);
+		if (friend == null) {
+			log.warn("User with id {} not found", friendId);
+			return;
+		}
+		Conversation conversation = conversationRepository.findById(conversationId);
+		if (conversation == null) {
+			conversation = conversationRepository.findById(friendId + "_" + userId);
+			if (conversation == null) {
+				
+				log.warn("Conversation with id {} not found", conversationId);
+				return;
+			}
+		}
+		if (user.getConversations() != null) {
+			log.info("User conversation {}", user.getConversations());
+//			log.info(conversationId);
+			user.removeConversationId(conversation.getId());
+			log.info("User conversation after delete {}", user.getConversations());
+		}
+		if (friend.getConversations() != null) {
+			friend.removeConversationId(conversation.getId());;
+		}
+		
+		
+		conversationRepository.deleteById(conversation.getId());
+		userRepository.save(user);
+		userRepository.save(friend);
+		messageNotifier.notifyRemoveConversation(conversation.getId(), userId);
+		messageNotifier.notifyRemoveConversation(conversation.getId(), friendId);
 	}
 
 }

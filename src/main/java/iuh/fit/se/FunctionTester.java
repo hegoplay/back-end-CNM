@@ -17,16 +17,6 @@ public class FunctionTester implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        String phone = "+8409846532";
-        String nameKeyword = "Who";
-        List<UserResponseDto> results = friendServiceAWS.findFriendsByName(phone, nameKeyword);
-
-        if (results.isEmpty()) {
-            System.out.println("No user found with keyword: " + nameKeyword);
-        } else {
-            results.forEach(user -> {
-                System.out.println("User found:\n" + user.toString());
-            });
-        }
+        System.out.println("Tested function");
     }
 }

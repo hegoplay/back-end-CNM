@@ -3,6 +3,7 @@ package iuh.fit.se.serviceImpl;
 import iuh.fit.se.mapper.UserMapper;
 import iuh.fit.se.model.User;
 import iuh.fit.se.model.dto.UserResponseDto;
+import iuh.fit.se.model.dto.search.FindPeopleByNameKeywordResponse;
 import iuh.fit.se.repo.FriendRespository;
 import iuh.fit.se.repo.UserRepository;
 import iuh.fit.se.service.FriendService;
@@ -17,228 +18,267 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class FriendServiceAWSImpl implements FriendService {
 
-    // Injecting the repository
-    private final FriendRespository friendRepository;
-    private final UserRepository userRepository;
+	// Injecting the repository
+	private final FriendRespository friendRepository;
+	private final UserRepository userRepository;
 
-    @Override
-    public List<UserResponseDto> getFriendsList(String phone) {
-        List<UserResponseDto> friendsList = new ArrayList<>();
-        List<String> friendPhoneList = userRepository.findByPhone(phone).getFriends();
-        for(String friendPhone : friendPhoneList) {
-            User user = userRepository.findByPhone(friendPhone);
-            UserResponseDto dto = UserMapper.INSTANCE.toUserResponseDto(user);
-            friendsList.add(dto);
-        }
-        return friendsList;
-    }
+	@Override
+	public List<UserResponseDto> getFriendsList(String phone) {
+		List<UserResponseDto> friendsList = new ArrayList<>();
+		List<String> friendPhoneList = userRepository.findByPhone(phone).getFriends();
+		for (String friendPhone : friendPhoneList) {
+			User user = userRepository.findByPhone(friendPhone);
+			UserResponseDto dto = UserMapper.INSTANCE.toUserResponseDto(user);
+			friendsList.add(dto);
+		}
+		return friendsList;
+	}
 
-    @Override
-    public List<UserResponseDto> findPersonByPhone(String phone) {
-        List<User> resultObjectList = friendRepository.findByPhone(phone);
-        List<UserResponseDto> resultDtoList = new ArrayList<>();
-        for(User user : resultObjectList) {
-            UserResponseDto dto = UserMapper.INSTANCE.toUserResponseDto(user);
-            resultDtoList.add(dto);
-        }
-        return resultDtoList;
-    }
+	@Override
+	public List<UserResponseDto> findPersonByPhone(String phone) {
+		List<User> resultObjectList = friendRepository.findByPhone(phone);
+		List<UserResponseDto> resultDtoList = new ArrayList<>();
+		for (User user : resultObjectList) {
+			UserResponseDto dto = UserMapper.INSTANCE.toUserResponseDto(user);
+			resultDtoList.add(dto);
+		}
+		return resultDtoList;
+	}
 
-    @Override
-    public List<UserResponseDto> findFriendsByName(String userPhone, String nameKeyword) {
+	@Override
+	public FindPeopleByNameKeywordResponse findPeopleByNameKeyword(String userPhone, String nameKeyword) {
+		List<UserResponseDto> matchedFriends = new ArrayList<>();
+		List<FindPeopleByNameKeywordResponse.UserWithSharedGroups> matchedOthersWithSharedGroups = new ArrayList<>();
+		List<UserResponseDto> matchedContacted = new ArrayList<>();
 
-        List<UserResponseDto> matchedUsers = new ArrayList<>();
-        List<String> friendPhoneList = userRepository.findByPhone(userPhone).getFriends();
-        if(friendPhoneList != null) {
-            log.info("Found {} friends", friendPhoneList.size());
-            System.out.println("Found " + friendPhoneList.size() + " friends");
-        }
-        for(String friendPhone : friendPhoneList){
-            User friendUser = userRepository.findByPhone(friendPhone);
+		List<String> friendPhoneList = userRepository.findByPhone(userPhone).getFriends();
+		if (friendPhoneList != null) {
+			log.info("Found {} friends", friendPhoneList.size());
+		}
 
-            if(friendUser.getName().contains(nameKeyword)){
-                UserResponseDto friendInfo = UserMapper.INSTANCE.toUserResponseDto(friendUser);
-                matchedUsers.add(friendInfo);
-            }
-        }
-        return matchedUsers;
-    }
-    
-    @Override
-    public void sendFriendRequest(String senderPhoneNumber, String receiverPhoneNumber) {
+		for (String friendPhone : friendPhoneList) {
+			User friendUser = userRepository.findByPhone(friendPhone);
+			if (friendUser == null) {
+				log.info("Friend null: {}", friendPhone);
+				continue;
+			}
 
-        // Chuẩn hóa sđt
-        receiverPhoneNumber = formatPhoneNumber(receiverPhoneNumber);
-        senderPhoneNumber = formatPhoneNumber(senderPhoneNumber);
-        
-        User sender = userRepository.findByPhone(senderPhoneNumber);
-        if (sender == null) {
-            throw new RuntimeException("Không tìm thấy người gửi: " + senderPhoneNumber);
-        }
-//        String phoneNumberReceiver = receiverPhoneNumber.trim().replaceAll("\\s+", "");
-//        User receiver = userRepository.findByPhone(phoneNumberReceiver);
+			if (friendUser.getName().contains(nameKeyword)) {
+				UserResponseDto friendInfo = UserMapper.INSTANCE.toUserResponseDto(friendUser);
+				matchedFriends.add(friendInfo);
 
-        User receiver = userRepository.findByPhone(receiverPhoneNumber);
-        if (receiver == null) {
-            throw new RuntimeException("Không tìm thấy người nhận: " + receiverPhoneNumber);
-        }
+				// Sample: Add to matchedOthersWithSharedGroups with dummy group name
+				List<String> dummyGroups = new ArrayList<>();
+				dummyGroups.add("same group");
+				matchedOthersWithSharedGroups
+						.add(new FindPeopleByNameKeywordResponse.UserWithSharedGroups(friendInfo, dummyGroups));
 
-        if (sender.getFriends().contains(receiverPhoneNumber)) {
-            throw new RuntimeException("Hai người đã là bạn bè rồi!");
-        }
+				// Sample: Add to matchedContacted
+				matchedContacted.add(friendInfo);
+			}
+		}
 
-        if (!receiver.getPendings().contains(senderPhoneNumber)) {
-            receiver.getPendings().add(senderPhoneNumber);
-            userRepository.save(receiver);
-        }
-    }
+		return new FindPeopleByNameKeywordResponse(matchedFriends, matchedOthersWithSharedGroups, matchedContacted);
+	}
 
-    @Override
-    public void acceptFriendRequest(String receiverPhoneNumber, String senderPhoneNumber) {
+	@Override
+	public void sendFriendRequest(String senderPhoneNumber, String receiverPhoneNumber) {
 
-        // Chuẩn hóa số điện thoại
-        receiverPhoneNumber = formatPhoneNumber(receiverPhoneNumber);
-        senderPhoneNumber = formatPhoneNumber(senderPhoneNumber);
+	    // Chuẩn hóa sđt
+	    receiverPhoneNumber = formatPhoneNumber(receiverPhoneNumber);
+	    senderPhoneNumber = formatPhoneNumber(senderPhoneNumber);
+	    
+	    User sender = userRepository.findByPhone(senderPhoneNumber);
+	    if (sender == null) {
+	        throw new RuntimeException("Không tìm thấy người gửi: " + senderPhoneNumber);
+	    }
+//	    String phoneNumberReceiver = receiverPhoneNumber.trim().replaceAll("\\s+", "");
+//	    User receiver = userRepository.findByPhone(phoneNumberReceiver);
 
-        User receiver = userRepository.findByPhone(receiverPhoneNumber);
-        if (receiver == null) {
-            throw new RuntimeException("Không tìm thấy người nhận: " + receiverPhoneNumber);
-        }
+	    User receiver = userRepository.findByPhone(receiverPhoneNumber);
+	    if (receiver == null) {
+	        throw new RuntimeException("Không tìm thấy người nhận: " + receiverPhoneNumber);
+	    }
 
-        User sender = userRepository.findByPhone(senderPhoneNumber);
-        if (sender == null) {
-            throw new RuntimeException("Không tìm thấy người gửi: " + senderPhoneNumber);
-        }
-        
-        if (!receiver.getPendings().contains(senderPhoneNumber)) {
-            throw new RuntimeException("Không có lời mời kết bạn từ: " + senderPhoneNumber);
-        }
+	    if (sender.getFriends().contains(receiverPhoneNumber)) {
+	        throw new RuntimeException("Hai người đã là bạn bè rồi!");
+	    }
 
-        // Xóa lời mời trong Pending
-        receiver.getPendings().remove(senderPhoneNumber);
+	    if (!receiver.getPendings().contains(senderPhoneNumber)) {
+	        receiver.getPendings().add(senderPhoneNumber);
+	        userRepository.save(receiver);
+	    }
+	    else {
+			throw new RuntimeException("Đã gửi lời mời kết bạn đến người này rồi!");
+		}
+	}
+	@Override
+	public void acceptFriendRequest(String receiverPhoneNumber, String senderPhoneNumber) {
 
-        // Thêm bạn cho cả 2
-        if (!receiver.getFriends().contains(senderPhoneNumber)) {
-            receiver.getFriends().add(senderPhoneNumber);
-        }
+		// Chuẩn hóa số điện thoại
+		receiverPhoneNumber = formatPhoneNumber(receiverPhoneNumber);
+		senderPhoneNumber = formatPhoneNumber(senderPhoneNumber);
 
-        if (!sender.getFriends().contains(receiverPhoneNumber)) {
-            sender.getFriends().add(receiverPhoneNumber);
-        }
+		User receiver = userRepository.findByPhone(receiverPhoneNumber);
+		if (receiver == null) {
+			throw new RuntimeException("Không tìm thấy người nhận: " + receiverPhoneNumber);
+		}
 
-        userRepository.save(receiver);
-        userRepository.save(sender);
-    }
+		User sender = userRepository.findByPhone(senderPhoneNumber);
+		if (sender == null) {
+			throw new RuntimeException("Không tìm thấy người gửi: " + senderPhoneNumber);
+		}
 
-    private String formatPhoneNumber(String phone) {
-        phone = phone.trim().replaceAll("\\s+", "");
-        if (!phone.startsWith("+")) {
-            phone = "+" + phone;
-        }
-        return phone;
-    }
-    //Người gửi huỷ lời mời kết bạn
-    @Override
-    public void cancelFriendRequest(String senderPhoneNumber, String receiverPhoneNumber) {
+		if (!receiver.getPendings().contains(senderPhoneNumber)) {
+			throw new RuntimeException("Không có lời mời kết bạn từ: " + senderPhoneNumber);
+		}
 
-        // Chuẩn hóa sđt
-        senderPhoneNumber = formatPhoneNumber(senderPhoneNumber);
-        receiverPhoneNumber = formatPhoneNumber(receiverPhoneNumber);
+		// Xóa lời mời trong Pending
+		receiver.getPendings().remove(senderPhoneNumber);
 
-        User receiver = userRepository.findByPhone(receiverPhoneNumber);
-        if (receiver == null) {
-            throw new RuntimeException("Không tìm thấy người nhận: " + receiverPhoneNumber);
-        }
+		// Thêm bạn cho cả 2
+		if (!receiver.getFriends().contains(senderPhoneNumber)) {
+			receiver.getFriends().add(senderPhoneNumber);
+		}
 
-        if (receiver.getPendings().contains(senderPhoneNumber)) {
-            receiver.getPendings().remove(senderPhoneNumber);
-            userRepository.save(receiver);
-        } else {
-            throw new RuntimeException("Không có lời mời kết bạn từ: " + senderPhoneNumber);
-        }
-    }
-    
-    //Từ chối lời mời kết bạn
-    
-    @Override
-    public void rejectFriendRequest(String receiverPhoneNumber, String senderPhoneNumber) {
+		if (!sender.getFriends().contains(receiverPhoneNumber)) {
+			sender.getFriends().add(receiverPhoneNumber);
+		}
 
-        receiverPhoneNumber = formatPhoneNumber(receiverPhoneNumber);
-        senderPhoneNumber = formatPhoneNumber(senderPhoneNumber);
+		log.info("Đã thêm bạn thành công: {} và {}", senderPhoneNumber, receiverPhoneNumber);
 
-        User receiver = userRepository.findByPhone(receiverPhoneNumber);
-        if (receiver == null) {
-            throw new RuntimeException("Không tìm thấy người nhận: " + receiverPhoneNumber);
-        }
+		userRepository.save(receiver);
+		userRepository.save(sender);
+	}
 
-        if (receiver.getPendings().contains(senderPhoneNumber)) {
-            receiver.getPendings().remove(senderPhoneNumber);
-            userRepository.save(receiver);
-        } else {
-            throw new RuntimeException("Không có lời mời kết bạn từ: " + senderPhoneNumber);
-        }
-    }
+	private String formatPhoneNumber(String phone) {
+		phone = phone.trim().replaceAll("\\s+", "");
+		if (!phone.startsWith("+")) {
+			phone = "+" + phone;
+		}
+		return phone;
+	}
 
+//Người gửi huỷ lời mời kết bạn
+	@Override
+	public void cancelFriendRequest(String senderPhoneNumber, String receiverPhoneNumber) {
 
-    @Override
-    public void removeFriend(String userPhoneNumber, String friendPhoneNumber) {
-    	// Chuẩn hóa số điện thoại
-    	userPhoneNumber = formatPhoneNumber(userPhoneNumber);
-    	friendPhoneNumber = formatPhoneNumber(friendPhoneNumber);
-    	
-        User user = userRepository.findByPhone(userPhoneNumber);
-        if (user == null) {
-            throw new RuntimeException("Không tìm thấy user: " + userPhoneNumber);
-        }
+		// Chuẩn hóa sđt
+		senderPhoneNumber = formatPhoneNumber(senderPhoneNumber);
+		receiverPhoneNumber = formatPhoneNumber(receiverPhoneNumber);
 
-        User friend = userRepository.findByPhone(friendPhoneNumber);
-        if (friend == null) {
-            throw new RuntimeException("Không tìm thấy bạn: " + friendPhoneNumber);
-        }
+		User receiver = userRepository.findByPhone(receiverPhoneNumber);
 
-        // Xoá bạn khỏi list bạn bè
-        user.getFriends().remove(friendPhoneNumber);
-        friend.getFriends().remove(userPhoneNumber);
+		if (receiver == null) {
+			throw new RuntimeException("Không tìm thấy người nhận: " + receiverPhoneNumber);
+		}
 
-        userRepository.save(user);
-        userRepository.save(friend);
-    }
-//    @Override
-//    public Map<String, List<UserResponseDto>> getPendingRequests(String userPhone) {
-//        userPhone = formatPhoneNumber(userPhone);
-//        User currentUser = userRepository.findByPhone(userPhone);
-//        if (currentUser == null) {
-//            throw new RuntimeException("Không tìm thấy người dùng: " + userPhone);
-//        }
-//
-//        Map<String, List<UserResponseDto>> result = new HashMap<>();
-//
-//        // Lấy incoming requests (các yêu cầu gửi tới user)
-//        List<UserResponseDto> incomingRequests = new ArrayList<>();
-//        for (String senderPhone : currentUser.getPendings()) {
-//            User sender = userRepository.findByPhone(senderPhone);
-//            if (sender != null) {
-//                incomingRequests.add(UserMapper.INSTANCE.toUserResponseDto(sender));
-//            }
-//        }
-//        result.put("incomingRequests", incomingRequests);
-//
-//        // Lấy sent requests (các yêu cầu user đã gửi)
-//        List<UserResponseDto> sentRequests = new ArrayList<>();
-//        List<User> allUsers = userRepository.findAll();
-//        for (User otherUser : allUsers) {
-//            if (!otherUser.getPhone().equals(userPhone) && otherUser.getPendings().contains(userPhone)) {
-//                sentRequests.add(UserMapper.INSTANCE.toUserResponseDto(otherUser));
-//            }
-//        }
-//        result.put("sentRequests", sentRequests);
-//
-//        return result;
-//    }
+		User sender = userRepository.findByPhone(senderPhoneNumber);
+		if (sender == null) {
+			throw new RuntimeException("Không tìm thấy người gửi: " + senderPhoneNumber);
+		}
 
+		if (sender.getPendings().contains(receiverPhoneNumber)) {
+			sender.getPendings().remove(receiverPhoneNumber);
+			userRepository.save(sender);
+		} else {
+			throw new RuntimeException("Không có lời mời kết bạn từ: " + senderPhoneNumber);
+		}
+	}
+
+//Hủy kết bạn
+
+	@Override
+	public void rejectFriendRequest(String receiverPhoneNumber, String senderPhoneNumber) {
+
+		receiverPhoneNumber = formatPhoneNumber(receiverPhoneNumber);
+		senderPhoneNumber = formatPhoneNumber(senderPhoneNumber);
+
+		User receiver = userRepository.findByPhone(receiverPhoneNumber);
+		if (receiver == null) {
+			throw new RuntimeException("Không tìm thấy người nhận: " + receiverPhoneNumber);
+		}
+
+		if (receiver.getPendings().contains(senderPhoneNumber)) {
+			receiver.getPendings().remove(senderPhoneNumber);
+			userRepository.save(receiver);
+		} else {
+			throw new RuntimeException("Không có lời mời kết bạn từ: " + senderPhoneNumber);
+		}
+	}
+
+	@Override
+	public void removeFriend(String userPhoneNumber, String friendPhoneNumber) {
+		// Chuẩn hóa số điện thoại
+		userPhoneNumber = formatPhoneNumber(userPhoneNumber);
+		friendPhoneNumber = formatPhoneNumber(friendPhoneNumber);
+
+		User user = userRepository.findByPhone(userPhoneNumber);
+		if (user == null) {
+			throw new RuntimeException("Không tìm thấy user: " + userPhoneNumber);
+		}
+
+		User friend = userRepository.findByPhone(friendPhoneNumber);
+		if (friend == null) {
+			throw new RuntimeException("Không tìm thấy bạn: " + friendPhoneNumber);
+		}
+
+		// Xoá bạn khỏi list bạn bè
+		user.getFriends().remove(friendPhoneNumber);
+		friend.getFriends().remove(userPhoneNumber);
+
+		userRepository.save(user);
+		userRepository.save(friend);
+	}
+
+	@Override
+	public List<UserResponseDto> getFriendRequests(String phone) {
+		// TODO Auto-generated method stub
+		phone = formatPhoneNumber(phone);
+		User user = userRepository.findByPhone(phone);
+		if (user != null) {
+			List<UserResponseDto> friendRequests = user.getPendings().stream()
+					.map(friendPhone -> UserMapper.INSTANCE.toUserResponseDto(userRepository.findByPhone(friendPhone)))
+					.toList();
+			return friendRequests;
+		} else {
+			throw new RuntimeException("User not found");
+		}
+	}
+
+	@Override
+	public boolean isRequestPending(String userPhoneNumber, String friendPhoneNumber) {
+		// TODO Auto-generated method stub
+		userPhoneNumber = formatPhoneNumber(userPhoneNumber);
+		friendPhoneNumber = formatPhoneNumber(friendPhoneNumber);
+		User user = userRepository.findByPhone(friendPhoneNumber);
+		if (user == null) {
+			throw new RuntimeException("Không tìm thấy user: " + userPhoneNumber);
+		}
+
+		return user.getPendings().contains(userPhoneNumber);
+	}
+
+	@Override
+	public boolean isFriend(String userPhoneNumber, String friendPhoneNumber) {
+		// TODO Auto-generated method stub
+		userPhoneNumber = formatPhoneNumber(userPhoneNumber);
+		friendPhoneNumber = formatPhoneNumber(friendPhoneNumber);
+		User user = userRepository.findByPhone(userPhoneNumber);
+		User friend = userRepository.findByPhone(friendPhoneNumber);
+		if (user == null) {
+			throw new RuntimeException("Không tìm thấy user: " + userPhoneNumber);
+		}
+		if (friend == null) {
+			throw new RuntimeException("Không tìm thấy bạn: " + friendPhoneNumber);
+		}
+
+		return user.getFriends().contains(friendPhoneNumber) && friend.getFriends().contains(userPhoneNumber);
+	}
 }
