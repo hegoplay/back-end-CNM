@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import iuh.fit.se.model.Conversation;
 import iuh.fit.se.model.dto.conversation.ConversationDetailDto;
 import iuh.fit.se.model.dto.conversation.ConversationDto;
 import iuh.fit.se.service.ConversationService;
@@ -59,6 +60,30 @@ public class ConversationController {
 		}
 		return ResponseEntity.ok(conversation);
 	}
+	
+//	@GetMapping
+//	public ResponseEntity<?> getConversations(
+//	        @RequestHeader("Authorization") String authorizationHeader) {
+//	    try {
+//	        String jwt = authorizationHeader.substring(7);
+//	        String userPhone = jwtUtils.getPhoneFromToken(jwt);
+//	        log.info("Fetching conversations for user: {}", userPhone);
+//
+//	        List<Conversation> conversations = conversationService.getConversationsForUser(userPhone);
+//
+//	        if (conversations == null || conversations.isEmpty()) {
+//	            return ResponseEntity.noContent().build(); // Trả về 204 nếu không có cuộc trò chuyện nào
+//	        }
+//
+//	        return ResponseEntity.ok(conversations);
+//	    } catch (Exception e) {
+//	        log.error("Error fetching conversations: {}", e.getMessage(), e);
+//	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//	                             .body("Không thể lấy danh sách hội thoại: " + e.getMessage());
+//	    }
+//	}
+
+	
 	@GetMapping("/initialize/{conversationId}")
 	public ResponseEntity<Void> markNotificationAsRead(@PathVariable String conversationId, @RequestHeader("Authorization") String authHeader) {
 		log.info("Marking notification as read for conversation: {}", conversationId);

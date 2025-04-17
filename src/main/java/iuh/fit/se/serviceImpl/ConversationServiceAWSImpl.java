@@ -22,6 +22,7 @@ import iuh.fit.se.repo.MessageRepository;
 import iuh.fit.se.repo.UserRepository;
 import iuh.fit.se.service.ConversationService;
 import iuh.fit.se.service.MessageNotifier;
+import iuh.fit.se.service.UserService;
 import iuh.fit.se.util.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +45,8 @@ public class ConversationServiceAWSImpl implements ConversationService {
 	private final DynamoDbTable<Conversation> conversationTable;
 	private final DynamoDbEnhancedClient enhancedClient;
 	private final MessageNotifier messageNotifier;
+	UserService userService;
+	JwtUtils jwtUtils;
 	
 	@Override
 	public void createFriendConversation(String userPhone, String friendPhone) {
@@ -120,14 +123,23 @@ public class ConversationServiceAWSImpl implements ConversationService {
 				return List.of();
 			}
 			List<Conversation> conversations = new ArrayList<>();
-			for (String conversationId : user.getConversations()) {
-				Conversation conversation = conversationRepository.findById(conversationId);
-				if (conversation != null) {
-					conversations.add(conversation);
-				}
-			}
+//			for (String conversationId : user.getConversations()) {
+//				Conversation conversation = conversationRepository.findById(conversationId);
+//				if (conversation != null) {
+//					conversations.add(conversation);
+//				}
+//			}
+	        if (user.getConversations() != null) {
+	            for (String conversationId : user.getConversations()) {
+	                Conversation conversation = conversationRepository.findById(conversationId);
+	                if (conversation != null) {
+	                    conversations.add(conversation);
+	                }
+	            }
+	        }
 			conversations.sort((c1, c2) -> c2.getUpdatedAt().compareTo(c1.getUpdatedAt()));
 			List<ConversationDto> conversationDtos = new ArrayList<>();
+			
 			for (Conversation conversation : conversations) {
 				conversationDtos.add(ConversationMapper.INSTANCE.fromConversationToDto(conversation));
 			}
@@ -243,5 +255,18 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		messageNotifier.notifyRemoveConversation(conversation.getId(), userId);
 		messageNotifier.notifyRemoveConversation(conversation.getId(), friendId);
 	}
-
+//	public List<String> getConversationsForUser(String phone) {
+//        // Lấy User từ UserService (giả sử bạn đã thêm findByPhone)
+//		String token = jwtUtils.generateTokenFromPhone(phone);
+//        User user = userService.getUserFromToken(token);
+//        if (user == null) {
+//            throw new IllegalArgumentException("User not found for phone: " + phone);
+//        }
+//        // Kiểm tra và khởi tạo conversations nếu null
+//        if (user.getConversations() == null) {
+//            user.setConversations(new ArrayList<>());
+//            userService.save(user); // Lưu thay đổi nếu cần
+//        }
+//        return user.getConversations();
+//    }
 }

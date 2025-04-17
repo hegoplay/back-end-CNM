@@ -315,5 +315,9 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 		}
 
 	}
+	@Override
+    public void save(User user) {
+        userRepository.save(user);
+    }
 
 }
