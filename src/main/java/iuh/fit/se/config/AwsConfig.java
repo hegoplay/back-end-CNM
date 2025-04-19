@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import iuh.fit.se.model.Call;
 import iuh.fit.se.model.Conversation;
 import iuh.fit.se.model.Message;
 import iuh.fit.se.model.User;
@@ -69,4 +70,9 @@ public class AwsConfig {
     DynamoDbTable<Message> messageTable(DynamoDbEnhancedClient enhancedClient) {
         return enhancedClient.table("messages", TableSchema.fromBean(Message.class));
     }
+	
+	@Bean
+	DynamoDbTable<Call> callTable(DynamoDbEnhancedClient enhancedClient) {
+		return enhancedClient.table("calls", TableSchema.fromBean(Call.class));
+	}
 }

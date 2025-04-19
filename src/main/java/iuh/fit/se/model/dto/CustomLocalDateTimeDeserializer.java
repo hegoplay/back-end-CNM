@@ -10,7 +10,8 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 public class CustomLocalDateTimeDeserializer extends StdDeserializer<LocalDateTime> {
-    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
+    private static final long serialVersionUID = 8835619198806041268L;
+	private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     public CustomLocalDateTimeDeserializer() {

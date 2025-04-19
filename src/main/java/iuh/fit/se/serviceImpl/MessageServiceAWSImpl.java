@@ -81,9 +81,6 @@ public class MessageServiceAWSImpl implements MessageService {
     @UpdateConversation
     public MessageResponseDTO sendCallEventMessage(MessageRequestDTO request) {
         validateMessageType(request, MessageType.CALL);
-        if (request.getCallEvent() == null) {
-            throw new IllegalArgumentException("Call event data is required");
-        }
         Message message = createAndSaveMessage(request);
         notifyParticipants(message);
         return messageMapper.toMessageResponseDto(message);
@@ -98,7 +95,8 @@ public class MessageServiceAWSImpl implements MessageService {
         if (!message.getSenderId().equals(userId)) {
             throw new RuntimeException("Only sender can recall message");
         }
-
+//        thêm setcontent về null 
+        
         message.setRecalled(true);
         messageRepository.save(message);
 //      xóa media hoặc file đính kèm
@@ -106,6 +104,7 @@ public class MessageServiceAWSImpl implements MessageService {
 			awsService.deleteFromS3PrefixCloudFront(message.getContent());
 		}
         
+        message.setContent(null);
         // Sử dụng MessageNotifier thay vì SocketIOService trực tiếp
         messageNotifier.notifyMessageRecalled(message.getConversationId(), messageId);
         
@@ -245,6 +244,36 @@ public class MessageServiceAWSImpl implements MessageService {
 		return messageMapper.toMessageResponseDto(message);
 		
 	
+	}
+
+	@Override
+	public void deleteConversationMessages(String conversationId) {
+		// TODO Auto-generated method stub
+		
+		
+		// Lấy danh sách tin nhắn trong conversation
+		List<Message> messages = messageRepository.findMessagesByConversationId(conversationId);
+		if (messages.isEmpty()) {
+			return; // Không có tin nhắn nào để xóa
+		}
+		// Xóa từng tin nhắn
+		for (Message message : messages) {
+			if ((message.getType() == MessageType.MEDIA || message.getType() == MessageType.FILE) && !message.isRecalled()) {
+				awsService.deleteFromS3PrefixCloudFront(message.getContent());
+			}
+			messageRepository.deleteMessage(message.getId());
+		}
+		// Xóa tin nhắn trong conversation
+		Conversation conversation = conversationRepository.findById(conversationId);
+		if (conversation != null) {
+			conversation.setMessages(new ArrayList<>());
+			conversationRepository.save(conversation);
+		}
+		
+		conversation.getParticipants().forEach(participant -> {
+			// Gửi thông báo cho từng người tham gia
+			messageNotifier.notifyClearConversation(conversationId, participant);
+		});
 	}
 
 }

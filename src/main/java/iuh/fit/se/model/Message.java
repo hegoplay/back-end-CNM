@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import iuh.fit.se.model.converter.TypeConversationConverter;
 import iuh.fit.se.model.converter.TypeMessageConverter;
+import iuh.fit.se.model.enumObj.CallStatus;
 import iuh.fit.se.model.enumObj.MessageType;
 import lombok.Builder;
 import lombok.Data;
@@ -41,7 +42,7 @@ public class Message {
     private boolean isRecalled; // Tin nhắn có bị thu hồi không
     private String replyTo; // Tin nhắn mà tin nhắn này trả lời (nullable)
     private List<Reaction> reactions; // Danh sách phản ứng
-    private CallEvent callEvent; // Dữ liệu sự kiện cuộc gọi (nếu type là "call-event")
+    private String callId; // ID của cuộc gọi
     
 
     @Data
@@ -57,18 +58,8 @@ public class Message {
         
     }
     
-    @Data
-	@lombok.NoArgsConstructor
-	@lombok.AllArgsConstructor
-	@lombok.experimental.FieldDefaults(level = lombok.AccessLevel.PRIVATE)
-	@DynamoDbBean
-	@JsonSerialize
-	@JsonDeserialize
-    public static class CallEvent {
-    	private String callId; // ID của cuộc gọi
-        private String action; // "started" | "ended" | "missed"
-        private int duration; // Thời lượng cuộc gọi (tính bằng giây)
-    }
+   
+    
     
     @DynamoDbPartitionKey
 	public String getId() {

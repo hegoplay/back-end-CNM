@@ -12,7 +12,13 @@ public interface ConversationService {
 	
 	ConversationDetailDto getConversationDetail(String conversationId);
 	
+	ConversationDetailDto getConversationDetail(String conversationId, String phone);
+	
+	ConversationDto getConversationById(String conversationId);
+	
 	void updateLastUpdated(String conversationId);
+	
+	void updateConversationInCall(String conversationId, boolean inCall);
 	
 	void markAllMessagesAsRead(String conversationId, String userId);
 	

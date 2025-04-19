@@ -322,4 +322,16 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 
 	}
 
+	@Override
+	public void updateCallStatus(String phone, String callId) {
+		// TODO Auto-generated method stub
+		User user = userRepository.findByPhone(phone);
+		if (user == null) {
+			throw new RuntimeException("User not found");
+		}
+		user.setCurrentCallId(callId);
+		user.setUpdatedAt(LocalDateTime.now());
+		userRepository.save(user);
+	}
+
 }

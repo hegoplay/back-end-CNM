@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import iuh.fit.se.mapper.ConversationMapper;
@@ -138,19 +137,8 @@ public class ConversationServiceAWSImpl implements ConversationService {
 				ConversationDto conversationDto = conversationMapper.fromConversationToDto(conversation);
 //		Thêm tin nhắn cuối vào conversationDto		
 				appendLastMessageIntoConversationDto(conversationDto);
-				String conversationId = conversation.getId();
-//				cài đặt lại conversation name và conversation img url
-				if (conversation.getType() == ConversationType.PRIVATE) {
-					String[] split = conversationId.split("_");
-					String otherUserId = split[0].equals(phone) ? split[1] : split[0];
-					User otherUser = userRepository.findByPhone(otherUserId);
-					if (otherUser != null) {
-						conversationDto.setConversationName(otherUser.getName());
-						conversationDto.setConversationImgUrl(otherUser.getBaseImg());
-					} else {
-						log.warn("User with id {} not found", otherUserId);
-					}
-				}
+				reDefineConversationNameAndImgUrl(conversationDto, phone);
+				
 				
 				
 				conversationDtos.add(conversationDto);
@@ -162,6 +150,37 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		}		
 	}
 
+	
+	@Override
+	public ConversationDetailDto getConversationDetail(String conversationId, String phone) {
+		// TODO Auto-generated method stub
+		Conversation conversation = conversationRepository.findById(conversationId);
+		if (conversation == null) {
+//				log.warn("Conversation with id {} not found", conversationId);
+			throw new RuntimeException("Conversation not found");
+		}
+		log.info(conversation.toString());
+		ConversationDetailDto conversationDetailDto = conversationMapper.fromConversationToDetailDto(conversation);
+		
+		log.info("Conversation detail: {}", conversationDetailDto);
+		
+		List<Message> messagesList = messageRepository.findMessagesByConversationId(conversationId);
+		List<MessageResponseDTO> messages = new ArrayList<>();
+		
+		for (Message message : messagesList) {
+			MessageResponseDTO messageResponseDTO = messageMapper.toMessageResponseDto(message);
+			messages.add(messageResponseDTO);
+		}
+		
+		conversationDetailDto.setMessageDetails((messages));
+		
+		reDefineConversationNameAndImgUrl(conversationDetailDto, phone);
+		
+		log.info("Conversation detail after redefine: {}", conversationDetailDto);
+		
+		return conversationDetailDto;
+	}
+	
 	@Override
 	public ConversationDetailDto getConversationDetail(String conversationId) {
 		// TODO Auto-generated method stub
@@ -182,7 +201,6 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			MessageResponseDTO messageResponseDTO = messageMapper.toMessageResponseDto(message);
 			messages.add(messageResponseDTO);
 		}
-		
 		
 		conversationDetailDto.setMessageDetails((messages));
 		
@@ -277,6 +295,67 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			MessageResponseDTO lastMessageDto = messageMapper.toMessageResponseDto(lastMessage);
 			dto.setLastMessage(lastMessageDto);
 		}
+	}
+	
+	private void reDefineConversationNameAndImgUrl(ConversationDetailDto conversationDto,
+			String phone) {
+			String conversationId = conversationDto.getId();
+//			cài đặt lại conversation name và conversation img url
+			if (conversationDto.getType() == ConversationType.PRIVATE) {
+				String[] split = conversationId.split("_");
+				String otherUserId = split[0].equals(phone) ? split[1] : split[0];
+				User otherUser = userRepository.findByPhone(otherUserId);
+				if (otherUser != null) {
+					conversationDto.setConversationName(otherUser.getName());
+					conversationDto.setConversationImgUrl(otherUser.getBaseImg());
+				} else {
+					log.warn("User with id {} not found", otherUserId);
+				}
+			}
+	}
+	
+	private void reDefineConversationNameAndImgUrl(ConversationDto conversationDto,
+			String phone) {
+			String conversationId = conversationDto.getId();
+//			cài đặt lại conversation name và conversation img url
+			if (conversationDto.getType() == ConversationType.PRIVATE) {
+				String[] split = conversationId.split("_");
+				String otherUserId = split[0].equals(phone) ? split[1] : split[0];
+				User otherUser = userRepository.findByPhone(otherUserId);
+				if (otherUser != null) {
+					conversationDto.setConversationName(otherUser.getName());
+					conversationDto.setConversationImgUrl(otherUser.getBaseImg());
+				} else {
+					log.warn("User with id {} not found", otherUserId);
+				}
+			}
+	}
+	@Override
+	public ConversationDto getConversationById(String conversationId) {
+		// TODO Auto-generated method stub
+
+	
+		Conversation conversation = conversationRepository.findById(conversationId);
+		if (conversation == null) {
+			log.warn("Conversation with id {} not found", conversationId);
+			throw new RuntimeException("Conversation not found");
+		}
+		ConversationDto conversationDto = conversationMapper.fromConversationToDto(conversation);
+		appendLastMessageIntoConversationDto(conversationDto);
+		return conversationDto;
+	}
+	@Override
+	public void updateConversationInCall(String conversationId,
+			boolean inCall) {
+		// TODO Auto-generated method stub
+		Conversation conversation = conversationRepository.findById(conversationId);
+		if (conversation == null) {
+			log.warn("Conversation with id {} not found", conversationId);
+			throw new RuntimeException("Conversation not found");
+		}
+		conversation.setCallInProgress(inCall);
+		conversationRepository.save(conversation);
+		log.info("Conversation {} updated to inCall: {}", conversationId, inCall);
 	}
 	
 }

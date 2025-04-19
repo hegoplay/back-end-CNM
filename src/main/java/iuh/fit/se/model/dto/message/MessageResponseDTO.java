@@ -26,7 +26,7 @@ public class MessageResponseDTO {
     private boolean isRecalled;
     private String replyTo;
     private List<ReactionDTO> reactions;
-    private CallEventDTO callEvent;
+    private String callId;
     
     @Data
     public static class ReactionDTO {

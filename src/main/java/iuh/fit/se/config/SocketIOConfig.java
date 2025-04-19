@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Configuration;
 
 import com.corundumstudio.socketio.AuthorizationResult;
 import com.corundumstudio.socketio.SocketIOServer;
-import com.corundumstudio.socketio.protocol.JacksonJsonSupport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
@@ -36,17 +35,8 @@ public class SocketIOConfig {
         config.setHostname("0.0.0.0");
         config.setPort(socketIoPort);
 
-        // Create JacksonJsonSupport with your custom ObjectMapper
-        JacksonJsonSupport jsonSupport = new JacksonJsonSupport();
-        try {
-            // Use reflection to set the ObjectMapper since there's no setter method
-            java.lang.reflect.Field mapperField = JacksonJsonSupport.class.getDeclaredField("objectMapper");
-            mapperField.setAccessible(true);
-            mapperField.set(jsonSupport, objectMapper());
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to configure JacksonJsonSupport", e);
-        }
-        config.setJsonSupport(jsonSupport);
+        // Sử dụng CustomJsonSupport
+//        config.setJsonSupport(new CustomJsonSupport(objectMapper()));
 
         // JWT Authentication
         config.setAuthorizationListener(data -> {

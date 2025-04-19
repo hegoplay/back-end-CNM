@@ -51,9 +51,11 @@ public class ConversationController {
 	}
 	
 	@GetMapping("/{conversationId}")
-	public ResponseEntity<ConversationDetailDto> getConversationDetail(@PathVariable String conversationId){
+	public ResponseEntity<ConversationDetailDto> getConversationDetail(@PathVariable String conversationId, @RequestHeader("Authorization") String authHeader){
 //		code di copilot
-		ConversationDetailDto conversation = conversationService.getConversationDetail(conversationId);
+		String jwt = authHeader.substring(7);
+		String phone = jwtUtils.getPhoneFromToken(jwt);
+		ConversationDetailDto conversation = conversationService.getConversationDetail(conversationId, phone);
 		if (conversation == null) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		}
@@ -65,7 +67,7 @@ public class ConversationController {
 		log.info("Marking notification as read for conversation: {}", conversationId);
 		String jwt = authHeader.substring(7);
 		String phone = jwtUtils.getPhoneFromToken(jwt);
-		ConversationDetailDto conversation = conversationService.getConversationDetail(conversationId);
+		ConversationDetailDto conversation = conversationService.getConversationDetail(conversationId, phone);
 		messageNotifier.initConversation(conversation, phone);
 		return ResponseEntity.ok(conversation);
 	}
