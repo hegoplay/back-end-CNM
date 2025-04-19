@@ -145,6 +145,21 @@ public class SocketIONotifier implements MessageNotifier {
 		client.leaveRoom(conversationId);
 		
 	}
-		
-		
+
+    @Override
+    public void notifyMemberAdded(String conversationId, String memberPhone) {
+        log.warn("Hasn't implement logic for notifyMemberAdded function");
+    }
+
+    @Override
+    public void notifyNewLeader(String conversationId, String memberPhone) {
+        log.warn("Hasn't implement logic for notifyMemberRemoved function");
+    }
+
+    @Override
+    public void notifyMemberLeft(String conversationId, String memberPhone) {
+        log.warn("Hasn't implement logic for notifyMemberLeft function");
+    }
+
+
 }

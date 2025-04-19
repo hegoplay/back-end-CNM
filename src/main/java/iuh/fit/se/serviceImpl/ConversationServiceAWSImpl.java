@@ -3,6 +3,7 @@ package iuh.fit.se.serviceImpl;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -278,5 +279,168 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			dto.setLastMessage(lastMessageDto);
 		}
 	}
-	
+
+	public ConversationDetailDto createGroupChat(String creatorPhone, String conversationName, String conversationImgUrl, List<String> participants) {
+		if (!participants.contains(creatorPhone)) {
+			throw new IllegalArgumentException("Creator must be in the participants list");
+		}
+		if (participants.size() < 3) {
+			throw new IllegalArgumentException("Group chat must have at least 3 members");
+		}
+		for (String phone : participants) {
+			User user = userRepository.findByPhone(phone);
+			if (user == null) {
+				throw new IllegalArgumentException("User with phone " + phone + " not found");
+			}
+		}
+		String baseId = LocalDateTime.now().toString().replace(":", "-") + "-" + UUID.randomUUID();
+		String conversationId = baseId;
+
+		// Đảm bảo ID không bị trùng
+		int retry = 0;
+		while (conversationRepository.findById(conversationId) != null) {
+			if (++retry > 5) {
+				throw new RuntimeException("Failed to generate unique conversation ID");
+			}
+			conversationId = LocalDateTime.now().toString().replace(":", "-") + "-" + UUID.randomUUID();
+		}
+
+		Conversation conversation = Conversation.builder()
+				.id(conversationId)
+				.callInProgress(false)
+				.type(ConversationType.GROUP)
+				.participants(new ArrayList<>(participants))
+				.createdAt(LocalDateTime.now())
+				.updatedAt(LocalDateTime.now())
+				.conversationName(conversationName)
+				.conversationImgUrl(conversationImgUrl)
+				.leader(creatorPhone)
+				.admins(List.of(creatorPhone))
+				.messages(List.of())
+				.currentCallId(null)
+				.build();
+		conversationRepository.save(conversation);
+		for (String phone : participants) {
+			User user = userRepository.findByPhone(phone);
+			if (user.getConversations() == null) {
+				user.setConversations(new ArrayList<>());
+			}
+			user.getConversations().add(conversationId);
+			userRepository.save(user);
+		}
+		ConversationDetailDto conversationDetailDto = getConversationDetail(conversationId);
+		for (String phone : participants) {
+			//messageNotifier.notifyNewConversation(conversationDetailDto, phone);
+		}
+		return conversationDetailDto;
+	}
+
+	@Override
+	public void addMembersToGroup(String conversationId, String leaderPhone, List<String> newMemberPhones) {
+		Conversation conversation = conversationRepository.findById(conversationId);
+		if (conversation == null) {
+			throw new RuntimeException("Conversation not found");
+		}
+		if (!conversation.getLeader().equals(leaderPhone)) {
+			throw new RuntimeException("Only the leader can add members");
+		}
+		if (newMemberPhones == null || newMemberPhones.isEmpty()) {
+			throw new RuntimeException("No new members provided");
+		}
+
+		List<String> addedMembers = new ArrayList<>();
+		for (String memberPhone : newMemberPhones) {
+			if (conversation.getParticipants().contains(memberPhone)) {
+				log.warn("Member {} already in the group, skipping", memberPhone);
+				continue;
+			}
+			User member = userRepository.findByPhone(memberPhone);
+			if (member == null) {
+				log.warn("User with phone {} not found, skipping", memberPhone);
+				continue;
+			}
+			conversation.getParticipants().add(memberPhone);
+			if (member.getConversations() == null) {
+				member.setConversations(new ArrayList<>());
+			}
+			member.getConversations().add(conversationId);
+			userRepository.save(member);
+			addedMembers.add(memberPhone);
+		}
+
+		if (addedMembers.isEmpty()) {
+			throw new RuntimeException("No valid members were added to the group");
+		}
+
+		conversationRepository.save(conversation);
+		for (String memberPhone : addedMembers) {
+			messageNotifier.notifyMemberAdded(conversationId, memberPhone);
+		}
+	}
+
+	@Override
+	public void removeMemberFromGroup(String conversationId, String leaderPhone, String memberPhone) {
+
+		Conversation conversation = conversationRepository.findById(conversationId);
+		if (conversation == null) {
+			throw new RuntimeException("Conversation not found");
+		}
+		if (!conversation.getLeader().equals(leaderPhone)) {
+			throw new RuntimeException("Only the leader can remove members");
+		}
+		if (!conversation.getParticipants().contains(memberPhone)) {
+			throw new RuntimeException("Member not in the group");
+		}
+		conversation.getParticipants().remove(memberPhone);
+		if (conversation.getParticipants().isEmpty()) {
+			conversationRepository.deleteById(conversationId);
+			messageRepository.deleteMessagesByConversationId(conversationId);
+		} else {
+			conversationRepository.save(conversation);
+		}
+		User member = userRepository.findByPhone(memberPhone);
+		if (member != null && member.getConversations() != null) {
+			member.getConversations().remove(conversationId);
+			userRepository.save(member);
+		}
+		//messageNotifier.notifyMemberLeft(conversationId, memberPhone);
+	}
+
+	@Override
+	public void leaveGroup(String conversationId, String memberPhone, String newLeaderPhone) {
+		Conversation conversation = conversationRepository.findById(conversationId);
+		if (conversation == null) {
+			throw new RuntimeException("Conversation not found");
+		}
+		if (!conversation.getParticipants().contains(memberPhone)) {
+			throw new RuntimeException("Member not in the group");
+		}
+		if (conversation.getLeader().equals(memberPhone)) {
+			if (newLeaderPhone == null || newLeaderPhone.isEmpty()) {
+				throw new RuntimeException("New leader must be specified when the leader leaves");
+			}
+			if (!conversation.getParticipants().contains(newLeaderPhone)) {
+				log.info(conversation.getParticipants().toString());
+				log.info(newLeaderPhone);
+				log.info(conversation.getParticipants().contains(newLeaderPhone)+"");
+				throw new RuntimeException("New leader must be a current member of the group");
+			}
+			conversation.setLeader(newLeaderPhone);
+			//messageNotifier.notifyNewLeader(conversationId, newLeaderPhone);
+		}
+		conversation.getParticipants().remove(memberPhone);
+		if (conversation.getParticipants().isEmpty()) {
+			conversationRepository.deleteById(conversationId);
+			messageRepository.deleteMessagesByConversationId(conversationId);
+		} else {
+			conversationRepository.save(conversation);
+		}
+		User member = userRepository.findByPhone(memberPhone);
+		if (member != null && member.getConversations() != null) {
+			member.getConversations().remove(conversationId);
+			userRepository.save(member);
+		}
+		//messageNotifier.notifyMemberLeft(conversationId, memberPhone);
+	}
+
 }

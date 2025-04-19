@@ -12,4 +12,8 @@ public interface MessageNotifier {
     void initConversation(ConversationDetailDto conversationDetail, String userId);
     void notifyNewConversation(ConversationDetailDto conversationDetail, String userId);
     void notifyRemoveConversation(String conversationId, String userId);
+
+    void notifyMemberAdded(String conversationId, String memberPhone);
+    void notifyNewLeader(String conversationId, String memberPhone);
+    void notifyMemberLeft(String conversationId, String memberPhone);
 }

@@ -290,4 +290,5 @@ public boolean isFriend(String userPhoneNumber, String friendPhoneNumber) {
 	
 	return user.getFriends().contains(friendPhoneNumber) && friend.getFriends().contains(userPhoneNumber);
 }
+
 }

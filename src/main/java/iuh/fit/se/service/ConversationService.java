@@ -17,5 +17,12 @@ public interface ConversationService {
 	void markAllMessagesAsRead(String conversationId, String userId);
 	
 	void deleteFriendConversation(String userId, String friendId);
-	
+
+	ConversationDetailDto createGroupChat(String creatorPhone, String conversationName, String conversationImgUrl, List<String> participants);
+
+	void addMembersToGroup(String conversationId, String leaderPhone, List<String> newMemberPhones);
+
+	void removeMemberFromGroup(String conversationId, String leaderPhone, String memberPhone);
+
+	void leaveGroup(String conversationId, String memberPhone, String newLeaderPhone);
 }
