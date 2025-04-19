@@ -296,7 +296,6 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		String baseId = LocalDateTime.now().toString().replace(":", "-") + "-" + UUID.randomUUID();
 		String conversationId = baseId;
 
-		// Đảm bảo ID không bị trùng
 		int retry = 0;
 		while (conversationRepository.findById(conversationId) != null) {
 			if (++retry > 5) {
@@ -380,7 +379,6 @@ public class ConversationServiceAWSImpl implements ConversationService {
 
 	@Override
 	public void removeMemberFromGroup(String conversationId, String leaderPhone, String memberPhone) {
-
 		Conversation conversation = conversationRepository.findById(conversationId);
 		if (conversation == null) {
 			throw new RuntimeException("Conversation not found");
@@ -391,13 +389,11 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		if (!conversation.getParticipants().contains(memberPhone)) {
 			throw new RuntimeException("Member not in the group");
 		}
-		conversation.getParticipants().remove(memberPhone);
-		if (conversation.getParticipants().isEmpty()) {
-			conversationRepository.deleteById(conversationId);
-			messageRepository.deleteMessagesByConversationId(conversationId);
-		} else {
-			conversationRepository.save(conversation);
+		if (conversation.getParticipants().size() <= 3) {
+			throw new RuntimeException("Cannot remove member from a group with only 3 members");
 		}
+		conversation.getParticipants().remove(memberPhone);
+		conversationRepository.save(conversation);
 		User member = userRepository.findByPhone(memberPhone);
 		if (member != null && member.getConversations() != null) {
 			member.getConversations().remove(conversationId);
@@ -415,32 +411,57 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		if (!conversation.getParticipants().contains(memberPhone)) {
 			throw new RuntimeException("Member not in the group");
 		}
-		if (conversation.getLeader().equals(memberPhone)) {
-			if (newLeaderPhone == null || newLeaderPhone.isEmpty()) {
-				throw new RuntimeException("New leader must be specified when the leader leaves");
+		int participantCount = conversation.getParticipants().size();
+		if (participantCount > 3) {
+			if (conversation.getLeader().equals(memberPhone)) {
+				if (newLeaderPhone == null || newLeaderPhone.isEmpty()) {
+					throw new RuntimeException("New leader must be specified when the leader leaves");
+				}
+				if (!conversation.getParticipants().contains(newLeaderPhone)) {
+					throw new RuntimeException("New leader must be a current member of the group");
+				}
+				conversation.setLeader(newLeaderPhone);
+				//messageNotifier.notifyNewLeader(conversationId, newLeaderPhone);
 			}
-			if (!conversation.getParticipants().contains(newLeaderPhone)) {
-				log.info(conversation.getParticipants().toString());
-				log.info(newLeaderPhone);
-				log.info(conversation.getParticipants().contains(newLeaderPhone)+"");
-				throw new RuntimeException("New leader must be a current member of the group");
-			}
-			conversation.setLeader(newLeaderPhone);
-			//messageNotifier.notifyNewLeader(conversationId, newLeaderPhone);
-		}
-		conversation.getParticipants().remove(memberPhone);
-		if (conversation.getParticipants().isEmpty()) {
-			conversationRepository.deleteById(conversationId);
-			messageRepository.deleteMessagesByConversationId(conversationId);
-		} else {
+			conversation.getParticipants().remove(memberPhone);
 			conversationRepository.save(conversation);
+			User member = userRepository.findByPhone(memberPhone);
+			if (member != null && member.getConversations() != null) {
+				member.getConversations().remove(conversationId);
+				userRepository.save(member);
+			}
+			//messageNotifier.notifyMemberLeft(conversationId, memberPhone);
+		} else if (participantCount == 3) {
+			// Disband the group by removing the conversation from all participants' lists
+			List<String> participants = new ArrayList<>(conversation.getParticipants());
+			for (String participantPhone : participants) {
+				User user = userRepository.findByPhone(participantPhone);
+				if (user != null && user.getConversations() != null) {
+					user.getConversations().remove(conversationId);
+					userRepository.save(user);
+				}
+			}
+		} else {
+			throw new RuntimeException("Group has less than 3 members, cannot leave");
 		}
-		User member = userRepository.findByPhone(memberPhone);
-		if (member != null && member.getConversations() != null) {
-			member.getConversations().remove(conversationId);
-			userRepository.save(member);
+	}
+
+	public void deleteGroup(String conversationId, String leaderPhone) {
+		Conversation conversation = conversationRepository.findById(conversationId);
+		if (conversation == null) {
+			throw new RuntimeException("Conversation not found");
 		}
-		//messageNotifier.notifyMemberLeft(conversationId, memberPhone);
+		if (!conversation.getLeader().equals(leaderPhone)) {
+			throw new RuntimeException("Only the leader can delete the group");
+		}
+		List<String> participants = conversation.getParticipants();
+		for (String participantPhone : participants) {
+			User user = userRepository.findByPhone(participantPhone);
+			if (user != null && user.getConversations() != null) {
+				user.getConversations().remove(conversationId);
+				userRepository.save(user);
+			}
+		}
 	}
 
 }

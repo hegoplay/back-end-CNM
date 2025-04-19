@@ -25,4 +25,6 @@ public interface ConversationService {
 	void removeMemberFromGroup(String conversationId, String leaderPhone, String memberPhone);
 
 	void leaveGroup(String conversationId, String memberPhone, String newLeaderPhone);
+
+	void deleteGroup(String conversationId, String userPhone);
 }
