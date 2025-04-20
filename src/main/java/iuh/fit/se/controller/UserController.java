@@ -96,6 +96,7 @@ public class UserController {
         log.info("JOINED");
         String jwt = authHeader.substring(7);
         String phone = jwtUtils.getPhoneFromToken(jwt);
+        log.info("PHONE: {}", userInfo);
         UserResponseDto updatedUser = userService.updateUserInfo(phone, userInfo);
 
         if (updatedUser == null) {

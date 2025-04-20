@@ -13,8 +13,6 @@ import iuh.fit.se.model.dto.user.UserUpdateRequestJSON;
 @Mapper(componentModel = "spring")
 public interface UserMapper {
 	
-	UserMapper INSTANCE = Mappers.getMapper( UserMapper.class );
-	
 	@Mapping(target = "isMale", source = "male")  // Rõ ràng mapping boolean
 	@Mapping(target = "isOnline", source = "online")  // Rõ ràng mapping boolean
 	UserResponseDto toUserResponseDto(User user);

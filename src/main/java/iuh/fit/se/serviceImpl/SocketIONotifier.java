@@ -1,5 +1,6 @@
 package iuh.fit.se.serviceImpl;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -113,20 +114,41 @@ public class SocketIONotifier implements MessageNotifier {
 	        }
 	}
 
+//	@Override
+//	public void notifyNewConversation(ConversationDetailDto conversationDetail,
+//			String userId) {
+//		// TODO Auto-generated method stub
+//		log.info("Notifying new conversation: conversationId = {}, userId = {}", 
+//				conversationDetail.getId(), userId);
+//		SocketIOClient client = userClientMap.get(userId);
+//		log.info("Map: {}", userClientMap);
+//		if (client != null) {
+//			client.sendEvent("new_conversation", conversationDetail);
+//		} else {
+//			log.warn("No client found for userId: {}", userId);
+//		}
+//		client.joinRoom(conversationDetail.getId());
+//		
+//	}
+	
 	@Override
-	public void notifyNewConversation(ConversationDetailDto conversationDetail,
-			String userId) {
-		// TODO Auto-generated method stub
-		log.info("Notifying new conversation: conversationId = {}, userId = {}", 
-				conversationDetail.getId(), userId);
-		SocketIOClient client = userClientMap.get(userId);
-		log.info("Map: {}", userClientMap);
-		if (client != null) {
-			client.sendEvent("new_conversation", conversationDetail);
-		} else {
-			log.warn("No client found for userId: {}", userId);
-		}
-		
+	public void notifyNewConversation(ConversationDetailDto conversationDetail, String userId) {
+	    log.info("Notifying new conversation: conversationId = {}, userId = {}", 
+	            conversationDetail.getId(), userId);
+	    SocketIOClient client = userClientMap.get(userId);
+	    log.info("Map: {}", userClientMap);
+	    if (client != null) {
+	        try {
+	            client.sendEvent("new_conversation", conversationDetail);
+	            client.joinRoom(conversationDetail.getId());
+	            log.info("User {} joined room and notified for conversation {}", userId, conversationDetail.getId());
+	        } catch (Exception e) {
+	            log.error("Error notifying user {} for new conversation {}: {}", 
+	                      userId, conversationDetail.getId(), e.getMessage(), e);
+	        }
+	    } else {
+	        log.warn("No client found for userId: {}. Skipping notification.", userId);
+	    }
 	}
 
 	@Override
@@ -135,14 +157,27 @@ public class SocketIONotifier implements MessageNotifier {
 		log.info("Notifying remove conversation: conversationId = {}, userId = {}", 
 				conversationId, userId);
 		SocketIOClient client = userClientMap.get(userId);
-		log.info("Map: {}", userClientMap);
+		
 		if (client != null) {
 			client.sendEvent("delete_conversation", conversationId);
 		} else {
 			log.warn("No client found for userId: {}", userId);
 		}
+		client.leaveRoom(conversationId);
 		
 	}
+
+	@Override
+    public void notifyGroupEvent(String conversationId, String eventType, List<String> data) {
+        log.info("Notifying group event: conversationId = {}, eventType = {}, data = {}", 
+                conversationId, eventType, data);
+        getChatNamespace().getRoomOperations(conversationId)
+            .sendEvent("group_event", Map.of(
+                "conversationId", conversationId,
+                "eventType", eventType,
+                "data", data
+            ));
+    }
 		
 		
 }

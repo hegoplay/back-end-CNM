@@ -3,6 +3,7 @@ package iuh.fit.se.controller;
 import java.util.HashMap;
 import java.util.Map;
 
+import iuh.fit.se.model.dto.UserResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -70,6 +71,41 @@ public class AuthController {
         log.info("Login request: {}", loginRequest);
         return ResponseEntity.ok(userService.login(loginRequest));
     }
+
+    /**
+     * Login using JWT token only
+     * @param authHeader Authorization header containing JWT token
+     * @return LoginResponse with user details
+     */
+    @PostMapping("/login-with-jwt")
+    public ResponseEntity<UserResponseDto> loginWithJwt(@RequestHeader("Authorization") String authHeader) {
+        // Validate header
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Missing or invalid Authorization header");
+        }
+
+        // Extract JWT
+        String jwt = authHeader.substring(7);
+
+        // Verify token and get phone
+        String phone = jwtUtils.getPhoneFromToken(jwt);
+
+        // Validate token
+        if (!jwtUtils.validateToken(jwt)) {
+            throw new RuntimeException("Invalid or expired JWT token");
+        }
+
+        // Get user details from service
+        UserResponseDto userResponseDto = userService.getUserInfo(phone);
+
+        if (userResponseDto == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        log.info("JWT login successful for phone: {}", phone);
+        return ResponseEntity.ok(userResponseDto);
+    }
+
     /**
      *
      * @param request

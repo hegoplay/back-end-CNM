@@ -8,7 +8,6 @@ import iuh.fit.se.model.dto.message.CallEventDTO;
 
 @Mapper	(componentModel = "spring")
 public interface CallEventMapper {
-    CallEventMapper INSTANCE = Mappers.getMapper(CallEventMapper.class);
     
     CallEventDTO toCallEventDTO(CallEvent callEvent);
     

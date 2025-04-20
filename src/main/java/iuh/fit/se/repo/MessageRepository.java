@@ -19,5 +19,7 @@ public interface MessageRepository {
 	
 	List<Message >findMessagesByConversationId(String conversationId);
 	
-	int countUnreadMessages(String conversationId, String userId);	
+	int countUnreadMessages(String conversationId, String userId);
+	
+	void deleteMessagesByConversationId(String conversationId);
 }
