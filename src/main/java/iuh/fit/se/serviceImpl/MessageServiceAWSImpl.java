@@ -171,6 +171,8 @@ public class MessageServiceAWSImpl implements MessageService {
     private Message createAndSaveMessage(MessageRequestDTO request) {
         validateMessageRequest(request);
         
+        log.info("Creating message: {}", request);
+        
         Message message = messageMapper.fromMessageRequestDto(request);
         
         // Set additional fields not mapped by MapStruct
@@ -178,8 +180,15 @@ public class MessageServiceAWSImpl implements MessageService {
             message.setId(UUID.randomUUID().toString());
         }
         message.setCreatedAt(LocalDateTime.now());
-        message.setReactions(Optional.ofNullable(message.getReactions()).orElse(new ArrayList<>()));
-        message.setSeenBy(Optional.ofNullable(message.getSeenBy()).orElse(new ArrayList<>()));
+        
+        message.setReactions(new ArrayList<>());
+        
+        List<String> seenBy = new ArrayList<>();
+        if (request.getSenderId() != null) {
+			seenBy.add(request.getSenderId());
+		}
+        
+        message.setSeenBy(seenBy);
         message.setRecalled(false);
 
         messageRepository.save(message);

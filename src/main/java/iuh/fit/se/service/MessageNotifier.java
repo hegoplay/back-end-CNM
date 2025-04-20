@@ -24,4 +24,5 @@ public interface MessageNotifier {
     void notifyMemberAdded(String conversationId, String memberPhone);
     void notifyNewLeader(String conversationId, String memberPhone);
     void notifyMemberLeft(String conversationId, String memberPhone);
+    
 }

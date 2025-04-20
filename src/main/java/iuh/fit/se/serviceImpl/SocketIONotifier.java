@@ -50,11 +50,6 @@ public class SocketIONotifier implements MessageNotifier {
 	public SocketIOClient getClient(String userId) {
 		log.info("Getting client for userId: {}", userId);
 		SocketIOClient client = userClientMap.get(userId);
-		// if (client != null) {
-		// log.info("Client found for userId: {}", userId);
-		// } else {
-		// log.warn("No client found for userId: {}", userId);
-		// }
 		return client;
 	}
 
