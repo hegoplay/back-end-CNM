@@ -102,11 +102,11 @@ public class ConversationServiceAWSImpl implements ConversationService {
 					.addPutItem(conversationTable, conversation)
 					.addPutItem(userTable, user).addPutItem(userTable, friend));
 			log.info("Transaction completed successfully");
-			ConversationDetailDto conversationDetailDto = getConversationDetail(
-					conversationId);
-			messageNotifier.notifyNewConversation(conversationDetailDto,
+			ConversationDto dto = conversationMapper
+					.fromConversationToDto(conversation);
+			messageNotifier.notifyNewConversation(dto,
 					userPhone);
-			messageNotifier.notifyNewConversation(conversationDetailDto,
+			messageNotifier.notifyNewConversation(dto,
 					friendPhone);
 
 		} catch (TransactionCanceledException e) {
@@ -158,34 +158,14 @@ public class ConversationServiceAWSImpl implements ConversationService {
 	@Override
 	public ConversationDetailDto getConversationDetail(String conversationId,
 			String phone) {
-		// TODO Auto-generated method stub
-		Conversation conversation = conversationRepository
-				.findById(conversationId);
-		if (conversation == null) {
-			// log.warn("Conversation with id {} not found", conversationId);
-			throw new RuntimeException("Conversation not found");
-		}
-		log.info(conversation.toString());
-		ConversationDetailDto conversationDetailDto = conversationMapper
-				.fromConversationToDetailDto(conversation);
-
-		log.info("Conversation detail: {}", conversationDetailDto);
-
-		List<Message> messagesList = messageRepository
-				.findMessagesByConversationId(conversationId);
-		List<MessageResponseDTO> messages = new ArrayList<>();
-
-		for (Message message : messagesList) {
-			MessageResponseDTO messageResponseDTO = messageMapper
-					.toMessageResponseDto(message);
-			messages.add(messageResponseDTO);
-		}
-
-		conversationDetailDto.setMessageDetails((messages));
-
+		
+		ConversationDetailDto conversationDetailDto = getConversationDetail(conversationId);
+		log.info("Conversation detail before redefine: {}",
+				conversationDetailDto);
 		redefineConversationNameAndImgUrl(conversationDetailDto, phone);
 
-		log.info("Conversation detail after redefine: {}",conversationDetailDto);
+		log.info("Conversation detail after redefine: {}",
+				conversationDetailDto);
 
 		return conversationDetailDto;
 	}
@@ -203,7 +183,6 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		ConversationDetailDto conversationDetailDto = conversationMapper
 				.fromConversationToDetailDto(conversation);
 
-		log.info("Conversation detail: {}", conversationDetailDto);
 
 		List<Message> messagesList = messageRepository
 				.findMessagesByConversationId(conversationId);
@@ -214,7 +193,11 @@ public class ConversationServiceAWSImpl implements ConversationService {
 					.toMessageResponseDto(message);
 			messages.add(messageResponseDTO);
 		}
-
+		if (conversation.getType() == ConversationType.GROUP) {
+			List<MemberDto> members = getGroupMembers(conversationId);
+			conversationDetailDto.setParticipantsDetails(members);
+		} 
+		
 		conversationDetailDto.setMessageDetails((messages));
 
 		return conversationDetailDto;
@@ -244,17 +227,16 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		}
 		List<String> messageIds = conversation.getMessages();
 		if (messageIds == null || messageIds.isEmpty()) {
-			log.warn("No messages found in conversation with id {}",
-					conversationId);
+			log.warn("No messages found in conversation with id {}", conversationId);
 			return;
 		}
-		for (String messageId : messageIds) {
+		messageIds.stream().forEach(messageId -> {
 			Message message = messageRepository.getMessageById(messageId);
 			if (message != null && !message.getSeenBy().contains(userId)) {
 				message.getSeenBy().add(userId);
 				messageRepository.save(message);
 			}
-		}
+		});
 		// Notify the user about the read status
 		messageNotifier.notifyAllMessagesRead(conversationId, userId);
 		log.info("All messages in conversation {} marked as read by user {}",
@@ -300,9 +282,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		conversationRepository.deleteById(conversation.getId());
 		userRepository.save(user);
 		userRepository.save(friend);
-		messageNotifier.notifyRemoveConversation(conversation.getId(), userId);
-		messageNotifier.notifyRemoveConversation(conversation.getId(),
-				friendId);
+		messageNotifier.notifyRemoveConversation(conversation.getId());
 	}
 
 	private void appendLastMessageIntoConversationDto(ConversationDto dto) {
@@ -329,6 +309,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			String[] split = conversationId.split("_");
 			String otherUserId = split[0].equals(phone) ? split[1] : split[0];
 			User otherUser = userRepository.findByPhone(otherUserId);
+			 log.info("otherUserId: {}", otherUserId);
 			if (otherUser != null) {
 				conversationDto.setConversationName(otherUser.getName());
 				conversationDto.setConversationImgUrl(otherUser.getBaseImg());
@@ -428,8 +409,10 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		}
 		ConversationDetailDto conversationDetailDto = getConversationDetail(
 				conversationId);
+		ConversationDto conversationDto = conversationMapper
+				.fromConversationToDto(conversation);
 		for (String phone : participants) {
-			 messageNotifier.notifyNewConversation(conversationDetailDto,phone);
+			messageNotifier.notifyNewConversation(conversationDto, phone);
 		}
 		return conversationDetailDto;
 	}
@@ -450,15 +433,14 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		try {
 			String imgUrl = awsService
 					.uploadToS3(request.getConversationImgUrl());
-			createGroupChat(creatorPhone, request.getConversationName(), imgUrl,
+			 ConversationDetailDto groupChat = createGroupChat(creatorPhone, request.getConversationName(), imgUrl,
 					request.getParticipants());
+			return groupChat; 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			throw new RuntimeException(
 					"Error uploading image to S3: " + e.getMessage());
 		}
-
-		return null;
 	}
 
 	@Override
@@ -502,8 +484,8 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		conversationRepository.save(conversation);
 		for (String memberPhone : addedMembers) {
 			messageNotifier.notifyMemberAdded(conversationId, memberPhone);
-//			 messageNotifier.notifyNewConversation(conversationDetailDto,
-//					 memberPhone);
+			// messageNotifier.notifyNewConversation(conversationDetailDto,
+			// memberPhone);
 		}
 	}
 
@@ -554,7 +536,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		// messageNotifier.notifyMemberLeft(conversationId, memberPhone);
 	}
 
-//	
+	//
 	@Override
 	public void leaveGroup(String conversationId, String userPhone,
 			String newLeaderPhone) {
@@ -578,8 +560,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 							"New leader must be a current member of the group");
 				}
 				conversation.setLeader(newLeaderPhone);
-				 messageNotifier.notifyNewLeader(conversationId,
-				 newLeaderPhone);
+				messageNotifier.notifyNewLeader(conversationId, newLeaderPhone);
 			}
 			if (conversation.getAdmins().contains(userPhone)) {
 				conversation.getAdmins().remove(userPhone);
@@ -592,7 +573,8 @@ public class ConversationServiceAWSImpl implements ConversationService {
 				member.getConversations().remove(conversationId);
 				userRepository.save(member);
 			}
-			 messageNotifier.notifyMemberLeft(conversationId, member.getPhoneNumber());
+			messageNotifier.notifyMemberLeft(conversationId,
+					member.getPhoneNumber());
 		} else if (participantCount == 3) {
 			// Disband the group by removing the conversation from all
 			// participants' lists
@@ -605,12 +587,15 @@ public class ConversationServiceAWSImpl implements ConversationService {
 					userRepository.save(user);
 				}
 			}
+			if (conversation.getConversationImgUrl() != null) { awsService.deleteFromS3(conversation.getConversationImgUrl()); }
+			conversationRepository.deleteById(conversationId);
+			
 		} else {
 			throw new RuntimeException(
 					"Group has less than 3 members, cannot leave");
 		}
 	}
-// thêm notify thành công 
+	// thêm notify thành công
 	public void deleteGroup(String conversationId, String leaderPhone) {
 		Conversation conversation = conversationRepository
 				.findById(conversationId);
@@ -625,13 +610,13 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			User user = userRepository.findByPhone(participantPhone);
 			if (user != null && user.getConversations() != null) {
 				user.getConversations().remove(conversationId);
-				messageNotifier.notifyRemoveConversation(conversationId,
-						participantPhone);
 				userRepository.save(user);
 			}
 		}
 		conversationRepository.deleteById(conversationId);
-		
+		if (conversation.getConversationImgUrl() != null) { awsService.deleteFromS3(conversation.getConversationImgUrl()); }
+		messageNotifier.notifyRemoveConversation(conversationId);
+
 	}
 
 	public void joinGroup(String conversationId, String userPhone) {
@@ -667,18 +652,20 @@ public class ConversationServiceAWSImpl implements ConversationService {
 	}
 
 	// update admin
-	
+
 	@Override
 	public void updateAdmin(String userId, String conversationId,
 			String targetUserId, boolean isAdmin) {
-		Conversation conversation = conversationRepository.findById(conversationId);
+		Conversation conversation = conversationRepository
+				.findById(conversationId);
 		if (conversation == null
 				|| conversation.getType() != ConversationType.GROUP) {
 			log.warn("Group conversation {} not found", conversationId);
 			throw new IllegalArgumentException("Group conversation not found");
 		}
 		if (!conversation.getLeader().equals(userId)) {
-			log.warn("User {} is not authorized to update admin status in conversation {}",
+			log.warn(
+					"User {} is not authorized to update admin status in conversation {}",
 					userId, conversationId);
 			throw new SecurityException("Only leader can update admin status");
 		}
@@ -688,7 +675,6 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			throw new IllegalArgumentException("User is not a member");
 		}
 
-		
 		List<String> admins = conversation.getAdmins();
 		if (isAdmin && !admins.contains(targetUserId)) {
 			admins.add(targetUserId);
@@ -698,8 +684,8 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		conversation.setAdmins(admins);
 		conversation.setUpdatedAt(LocalDateTime.now());
 		conversationRepository.save(conversation);
-//		messageNotifier.notifyGroupEvent(conversationId, "admin_updated",
-//				List.of(targetUserId, String.valueOf(isAdmin)));
+		// messageNotifier.notifyGroupEvent(conversationId, "admin_updated",
+		// List.of(targetUserId, String.valueOf(isAdmin)));
 		log.info(
 				"Updated admin status for user {} in conversation {}: isAdmin={}",
 				targetUserId, conversationId, isAdmin);
@@ -732,12 +718,13 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		}
 		conversation.setUpdatedAt(LocalDateTime.now());
 		conversationRepository.save(conversation);
-//		messageNotifier.notifyGroupEvent(conversationId, "group_info_updated",
-//				List.of(conversationName, conversationImgUrl));
+		// messageNotifier.notifyGroupEvent(conversationId,
+		// "group_info_updated",
+		// List.of(conversationName, conversationImgUrl));
 		log.info("Updated group info for conversation {}", conversationId);
 	}
 	// Tìm thành viên
-//	đã xong
+	// đã xong
 	@Override
 	public List<MemberDto> searchMembers(String conversationId,
 			String keyword) {
@@ -749,16 +736,17 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			throw new IllegalArgumentException("Group conversation not found");
 		}
 		List<String> membersId = conversation.getParticipants();
-		List<MemberDto> members = membersId.stream().map(userId -> userRepository.findByPhone(userId))
-				.filter(user -> user.getName().toLowerCase().contains(keyword.toLowerCase()))
-				.map(user ->{ 
+		List<MemberDto> members = membersId.stream()
+				.map(userId -> userRepository.findByPhone(userId))
+				.filter(user -> user.getName().toLowerCase()
+						.contains(keyword.toLowerCase()))
+				.map(user -> {
 					MemberDto memberDto = userMapper.toMemberDto(user);
-					memberDto.setAdmin(conversation.getAdmins().contains(memberDto.getPhoneNumber()));					
+					memberDto.setAdmin(conversation.getAdmins()
+							.contains(memberDto.getPhoneNumber()));
 					return memberDto;
-					}
-				)
-				.toList();
-		
+				}).toList();
+
 		log.info("Found {} members matching keyword '{}' in conversation {}",
 				members.size(), keyword, conversationId);
 		return members;
@@ -766,7 +754,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 	// Rời gr
 
 	// Lấy ds thành viên
-//	xong
+	// xong
 	@Override
 	public List<MemberDto> getGroupMembers(String conversationId) {
 		Conversation conversation = conversationRepository
@@ -778,14 +766,14 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		}
 
 		List<String> membersId = conversation.getParticipants();
-		List<MemberDto> memberDtos = membersId.stream().map(userId -> userRepository.findByPhone(userId))
-				.map(user ->{ 
+		List<MemberDto> memberDtos = membersId.stream()
+				.map(userId -> userRepository.findByPhone(userId)).map(user -> {
 					MemberDto memberDto = userMapper.toMemberDto(user);
-					memberDto.setAdmin(conversation.getAdmins().contains(memberDto.getPhoneNumber()));					
+					memberDto.setAdmin(conversation.getAdmins()
+							.contains(memberDto.getPhoneNumber()));
+					memberDto.setLeader(conversation.getLeader() == user.getPhoneNumber());
 					return memberDto;
-					}
-				)
-				.toList();
+				}).toList();
 		return memberDtos;
 	}
 }

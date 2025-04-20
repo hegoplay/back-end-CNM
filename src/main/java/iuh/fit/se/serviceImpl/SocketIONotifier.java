@@ -12,6 +12,7 @@ import com.corundumstudio.socketio.SocketIOServer;
 
 import iuh.fit.se.model.dto.UserResponseDto;
 import iuh.fit.se.model.dto.conversation.ConversationDetailDto;
+import iuh.fit.se.model.dto.conversation.ConversationDto;
 import iuh.fit.se.model.dto.message.MessageResponseDTO;
 import iuh.fit.se.service.MessageNotifier;
 import iuh.fit.se.service.UserService;
@@ -123,7 +124,7 @@ public class SocketIONotifier implements MessageNotifier {
 	}
 	
 	@Override
-	public void notifyNewConversation(ConversationDetailDto conversationDetail,
+	public void notifyNewConversation(ConversationDto conversationDetail,
 			String userId) {
 		// TODO Auto-generated method stub
 		log.info("Notifying new conversation: conversationId = {}, userId = {}",
@@ -132,44 +133,43 @@ public class SocketIONotifier implements MessageNotifier {
 		log.info("Map: {}", userClientMap);
 		if (client != null) {
 			client.sendEvent("new_conversation", conversationDetail);
+			client.joinRoom(conversationDetail.getId());
 		} else {
 			log.warn("No client found for userId: {}", userId);
 		}
-		client.joinRoom(conversationDetail.getId());
 
 	}
 
 	@Override
-	public void notifyRemoveConversation(String conversationId, String userId) {
+	public void notifyRemoveConversation(String conversationId) {
 		// TODO Auto-generated method stub
 		log.info(
-				"Notifying remove conversation: conversationId = {}, userId = {}",
-				conversationId, userId);
-		SocketIOClient client = userClientMap.get(userId);
-
-		if (client != null) {
-			client.sendEvent("delete_conversation", conversationId);
-		} else {
-			log.warn("No client found for userId: {}", userId);
-		}
-		client.leaveRoom(conversationId);
+				"Notifying remove conversation: conversationId = {}",
+				conversationId);
+//
+//		if (client != null) {
+//			client.sendEvent("delete_conversation", conversationId);
+//		} else {
+//			log.warn("No client found for userId: {}", userId);
+//		}
+		getChatNamespace().getRoomOperations(conversationId)
+				.sendEvent("delete_conversation", conversationId);
+		getChatNamespace().getRoomOperations(conversationId)
+				.getClients()
+				.stream()
+				.forEach(c -> {
+					c.leaveRoom(conversationId);
+				});
+		
 
 	}
 	
 	@Override
-	public void notifyClearConversation(String conversationId, String userId) {
+	public void notifyClearConversation(String conversationId) {
 		// TODO Auto-generated method stub
-		log.info(
-				"Notifying clear conversation: conversationId = {}, userId = {}",
-				conversationId, userId);
-		SocketIOClient client = userClientMap.get(userId);
-
-		if (client != null) {
-			client.sendEvent("clear_conversation", conversationId);
-		} else {
-			log.warn("No client found for userId: {}", userId);
-		}
-
+		
+		getChatNamespace().getRoomOperations(conversationId)
+				.sendEvent("clear_conversation", conversationId);
 	}
 
 

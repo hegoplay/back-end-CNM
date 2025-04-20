@@ -15,6 +15,7 @@ public class MemberDto {
     private String phoneNumber;
     private String name;
     private boolean isAdmin;
+    private boolean isLeader;
     private String baseImg;
     private boolean isOnline; // Trạng thái online
 }

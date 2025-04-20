@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import iuh.fit.se.model.Message;
 import iuh.fit.se.model.dto.CustomLocalDateTimeSerializer;
+import iuh.fit.se.model.dto.UserResponseDto;
 import iuh.fit.se.model.dto.message.MessageResponseDTO;
 import iuh.fit.se.model.enumObj.ConversationType;
 import lombok.Builder;
@@ -23,7 +24,9 @@ public class ConversationDetailDto {
 
     private String id;
     private ConversationType type;
+//    xóa sau
     private List<String> participants;
+    private List<MemberDto> participantsDetails;
     private List<MessageResponseDTO> messageDetails; //messages id
     
     private Boolean callInProgress;

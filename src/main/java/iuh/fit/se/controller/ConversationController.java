@@ -20,10 +20,12 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import iuh.fit.se.model.dto.conversation.AddMemberRequestDto;
 import iuh.fit.se.model.dto.conversation.ConversationDetailDto;
 import iuh.fit.se.model.dto.conversation.ConversationDto;
 import iuh.fit.se.model.dto.conversation.CreateGroupImgDto;
 import iuh.fit.se.model.dto.conversation.CreateGroupRequest;
+import iuh.fit.se.model.dto.conversation.LeaveGroupRequestDto;
 import iuh.fit.se.model.dto.conversation.MemberDto;
 import iuh.fit.se.model.enumObj.ConversationType;
 import iuh.fit.se.service.ConversationService;
@@ -144,7 +146,7 @@ public class ConversationController {
 	}
 	
 	@PostMapping("/{conversationId}/add-members")
-	public ResponseEntity<Void> addMembers(@PathVariable String conversationId, @RequestBody List<String> newMembersPhone, @RequestHeader("Authorization") String authHeader) {
+	public ResponseEntity<Void> addMembers(@PathVariable String conversationId, @RequestBody AddMemberRequestDto request, @RequestHeader("Authorization") String authHeader) {
 		try {
 			if (authHeader == null || !authHeader.startsWith("Bearer ")) {
 				throw new IllegalArgumentException("Invalid Authorization header");
@@ -154,11 +156,11 @@ public class ConversationController {
 			if (userPhone == null || userPhone.isEmpty()) {
 				throw new IllegalArgumentException("Invalid user phone retrieved from token");
 			}
-			log.info("Trying to add members to conversation: {}", newMembersPhone);
-			for(String newMemberPhone : newMembersPhone) {
-				newMemberPhone = FormatUtils.formatPhoneNumber(newMemberPhone);
-			}
-			conversationService.addMembersToGroup(conversationId, newMembersPhone);
+			log.info("Trying to add members to conversation: {}", request);
+			
+			List<String> list = request.getNewMembersPhone().stream().map(FormatUtils::formatPhoneNumber).toList();
+			
+			conversationService.addMembersToGroup(conversationId, list);
 			return ResponseEntity.ok().build();
 		} catch (IllegalArgumentException e) {
 			return ResponseEntity.badRequest().build();
@@ -181,11 +183,11 @@ public class ConversationController {
 	@PostMapping("/{conversationId}/leave")
 	public ResponseEntity<Void> leaveGroup(
 			@PathVariable String conversationId,
-			@RequestBody String newLeaderPhone,
+			@RequestBody LeaveGroupRequestDto request,
 			@RequestHeader("Authorization") String authHeader) {
 		String jwt = authHeader.substring(7);
 		String userPhone = jwtUtils.getPhoneFromToken(jwt);
-		newLeaderPhone = FormatUtils.formatPhoneNumber(newLeaderPhone);
+		String newLeaderPhone = request.getNewLeaderPhone() !=null ? FormatUtils.formatPhoneNumber(request.getNewLeaderPhone()) : null;
 		conversationService.leaveGroup(conversationId, userPhone, newLeaderPhone);
 		return ResponseEntity.ok().build();
 	}
@@ -225,7 +227,7 @@ public class ConversationController {
 		return ResponseEntity.ok().build();
 	}
 
-	@PostMapping(value = "/group", consumes = { "multipart/form-data" })
+	@PostMapping(value = "/group", consumes = { "multipart/form-data" }, produces = { "application/json" })
 	public ResponseEntity<ConversationDetailDto> createGroup(@RequestHeader("Authorization") String authHeader,
 			@RequestPart("name") String name, @RequestPart(value = "baseImg", required = false) MultipartFile baseImg,
 			@RequestPart("memberIds") String memberIdsJson) {
@@ -238,10 +240,11 @@ public class ConversationController {
 			CreateGroupImgDto request = CreateGroupImgDto.builder().conversationName(name).conversationImgUrl(baseImg).participants(memberIds)
 					.build();
 			ConversationDetailDto conversationId = conversationService.createGroupChat(request, phone);
+			log.info("Group created successfully: {}", conversationId);
 			return ResponseEntity.ok(conversationId);
 		} catch (Exception e) {
 			log.error("Failed to create group: {}", e.getMessage());
-			throw new RuntimeException("Fail to create group: {}");
+			throw new RuntimeException("Fail to create group: %s".formatted(e.getMessage()));
 		}
 	}
 

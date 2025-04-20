@@ -279,10 +279,7 @@ public class MessageServiceAWSImpl implements MessageService {
 			conversationRepository.save(conversation);
 		}
 		
-		conversation.getParticipants().forEach(participant -> {
-			// Gửi thông báo cho từng người tham gia
-			messageNotifier.notifyClearConversation(conversationId, participant);
-		});
+		messageNotifier.notifyClearConversation(conversationId);
 	}
 
 }
