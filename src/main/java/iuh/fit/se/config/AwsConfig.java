@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import iuh.fit.se.model.Conversation;
+import iuh.fit.se.model.ConversationMember;
 import iuh.fit.se.model.Message;
 import iuh.fit.se.model.User;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -69,4 +70,8 @@ public class AwsConfig {
     DynamoDbTable<Message> messageTable(DynamoDbEnhancedClient enhancedClient) {
         return enhancedClient.table("messages", TableSchema.fromBean(Message.class));
     }
+	@Bean
+	DynamoDbTable<ConversationMember> conversationMemberTable(DynamoDbEnhancedClient enhancedClient) {
+	    return enhancedClient.table("conversation_members", TableSchema.fromBean(ConversationMember.class));
+	}
 }

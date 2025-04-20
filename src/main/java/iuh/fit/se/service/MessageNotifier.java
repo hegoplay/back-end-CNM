@@ -1,5 +1,7 @@
 package iuh.fit.se.service;
 
+import java.util.List;
+
 import iuh.fit.se.model.dto.conversation.ConversationDetailDto;
 import iuh.fit.se.model.dto.message.MessageResponseDTO;
 
@@ -12,4 +14,5 @@ public interface MessageNotifier {
     void initConversation(ConversationDetailDto conversationDetail, String userId);
     void notifyNewConversation(ConversationDetailDto conversationDetail, String userId);
     void notifyRemoveConversation(String conversationId, String userId);
+    void notifyGroupEvent(String conversationId, String eventType, List<String> data);
 }

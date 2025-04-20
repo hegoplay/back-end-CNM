@@ -38,4 +38,7 @@ public interface UserService {
 	List<UserResponseDto> getFriends(String phone);
 
 	void acceptRequest(String phone, String friendPhone);
+	
+	void save(User user);
+
 }
