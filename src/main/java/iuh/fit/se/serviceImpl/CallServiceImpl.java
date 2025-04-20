@@ -6,14 +6,14 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import iuh.fit.se.mapper.CallMapper;
 import iuh.fit.se.model.Call;
 import iuh.fit.se.model.Conversation;
-import iuh.fit.se.model.User;
+import iuh.fit.se.model.dto.call.CallResponseDto;
 import iuh.fit.se.model.enumObj.CallStatus;
 import iuh.fit.se.model.enumObj.CallType;
 import iuh.fit.se.repo.CallRepository;
 import iuh.fit.se.repo.ConversationRepository;
-import iuh.fit.se.repo.UserRepository;
 import iuh.fit.se.service.CallService;
 import iuh.fit.se.service.UserService;
 import lombok.AccessLevel;
@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 public class CallServiceImpl implements CallService {
 
 	CallRepository callRepository;
-//	CallMapper callMapper;
+	CallMapper callMapper;
 	ConversationRepository conversationRepository;
 	UserService userService;
 
@@ -86,6 +86,16 @@ public class CallServiceImpl implements CallService {
         // Gửi sự kiện call_ended đến tất cả user trong room (addition)
         
         
+	}
+	@Override
+	public CallResponseDto findById(String callId) {
+		Call call = callRepository.findById(callId).orElse(null);
+		if (call == null) {
+			throw new RuntimeException("Call not found");
+		}
+		CallResponseDto callResponseDto = callMapper.toCallResponseDto(call);
+		return callResponseDto;
+		
 	}
 
 }

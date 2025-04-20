@@ -200,4 +200,24 @@ public class SocketIONotifier implements MessageNotifier {
 		log.info("Sent call invitation to conversation {}", conversationId);
 	}
 
+
+    @Override
+    public void notifyMemberAdded(String conversationId, String memberPhone) {
+//        log.warn("Hasn't implement logic for notifyMemberAdded function");
+        getChatNamespace().getRoomOperations(conversationId)
+				.sendEvent("member_added", Map.of("conversationId", conversationId, "memberPhone", memberPhone));
+        
+    }
+
+    @Override
+    public void notifyNewLeader(String conversationId, String memberPhone) {
+        log.warn("Hasn't implement logic for notifyMemberRemoved function");
+    }
+
+    @Override
+    public void notifyMemberLeft(String conversationId, String memberPhone) {
+        log.warn("Hasn't implement logic for notifyMemberLeft function");
+    }
+
+
 }

@@ -3,6 +3,10 @@ package iuh.fit.se.serviceImpl;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.stereotype.Service;
 
@@ -11,10 +15,9 @@ import com.corundumstudio.socketio.SocketIONamespace;
 import com.corundumstudio.socketio.SocketIOServer;
 
 import iuh.fit.se.model.Call;
+import iuh.fit.se.model.dto.call.CallResponseDto;
 import iuh.fit.se.model.enumObj.CallStatus;
 import iuh.fit.se.repo.CallRepository;
-import iuh.fit.se.repo.ConversationRepository;
-import iuh.fit.se.repo.UserRepository;
 import iuh.fit.se.service.CallService;
 import iuh.fit.se.service.UserService;
 import iuh.fit.se.util.JwtUtils;
@@ -38,6 +41,9 @@ public class SocketIOCallService {
     private final Map<String, Set<String>> rooms = new ConcurrentHashMap<>(); // roomId -> Set<userId>
     private final Map<String, String> roomToCallId = new ConcurrentHashMap<>(); // roomId -> callId
     private final Map<String, String> roomToConversationId = new ConcurrentHashMap<>(); // roomId -> conversationId
+    private final Map<String, ScheduledFuture<?>> roomTimeouts = new ConcurrentHashMap<>(); // roomId -> ScheduledFuture
+    
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     private static final String NAMESPACE = "/call";
     public static final String getPhone = "username";
@@ -64,17 +70,45 @@ public class SocketIOCallService {
 	                return;
 	            }
 				
+				String callId = roomToCallId.get(roomId);
+                if (callId != null) {
+                    Call call = callDynamoRepository.findById(callId).orElse(null);
+                    if (call == null || call.getStatus() == CallStatus.ENDED) {
+                        log.warn("Call {} is ended or not found for room {}", callId, roomId);
+                        client.sendEvent("call_ended", "Call has ended");
+                        client.disconnect();
+                        return;
+                    }
+                } else {
+                    log.warn("CallId not found for room {}", roomId);
+                    client.sendEvent("call_ended", "Invalid room");
+                    client.disconnect();
+                    return;
+                }
+				
 				registerClient(username, client);
 //				kiểm tra room
 				int roomSize = callNamespace.getRoomOperations(roomId).getClients().size();
 				Set<String> roomUsers = rooms.computeIfAbsent(roomId, k -> ConcurrentHashMap.newKeySet());
+				
+				log.info("Room {} has {} users", roomId, callNamespace.getRoomOperations(roomId).getClients());
+				
 				if (roomSize >= 2) {
 	                log.warn("Room {} is full", roomId);
 	                client.sendEvent("room_full");
 	                client.disconnect();
 	                return;
 	            }
+				
+				ScheduledFuture<?> existingTimeout = roomTimeouts.get(roomId);
+                if (existingTimeout != null) {
+                    existingTimeout.cancel(false);
+                    roomTimeouts.remove(roomId);
+                    log.info("Canceled timeout for room {} as user {} joined", roomId, username);
+                }
+				
 				roomUsers.add(username);
+				rooms.put(roomId, roomUsers);
 				client.joinRoom(roomId);
 				log.info("User {} joined room {} on connect", username, roomId);
 				
@@ -84,7 +118,6 @@ public class SocketIOCallService {
                 .forEach(c -> c.sendEvent("user_joined", Map.of("userId", username)));
 				
 				// Nếu đây là user thứ 2 (User B), cập nhật trạng thái cuộc gọi
-				String callId = roomToCallId.get(roomId);
 				String conversationId = roomToConversationId.get(roomId);
 				if (roomUsers.size() == 2) {
 	                if (callId != null && conversationId != null) {
@@ -193,10 +226,70 @@ public class SocketIOCallService {
         callNamespace.addEventListener("leave_call", Map.class, (client, data, ackSender) -> {
             String userId = getUserIdFromClient(client);
             String roomId = (String) data.get("roomId");
+            log.info("User {} requested to leave call in room {}", userId, roomId);
             if (userId != null && roomId != null) {
                 handleLeaveCall(client, userId, roomId);
             }
         });
+        
+     // Thêm sự kiện check_room
+        callNamespace.addEventListener("check_room", Map.class, (client, data, ackSender) -> {
+            String roomId = (String) data.get("roomId");
+            String userId = getUserIdFromClient(client);
+            log.info("User {} requested to check room {}", userId, roomId);
+
+            if (roomId == null || userId == null) {
+                log.warn("Invalid check_room request: roomId = {}, userId = {}", roomId, userId);
+                ackSender.sendAckData(Map.of(
+                    "status", "error",
+                    "message", "Invalid roomId or userId"
+                ));
+                return;
+            }
+
+            // Kiểm tra room có tồn tại không
+            Set<String> roomUsers = rooms.get(roomId);
+            if (roomUsers == null) {
+                log.info("Room {} does not exist", roomId);
+                ackSender.sendAckData(Map.of(
+                    "status", "inactive",
+                    "message", "Room does not exist"
+                ));
+                return;
+            }
+
+            // Kiểm tra callId liên quan đến room
+            String callId = roomToCallId.get(roomId);
+            if (callId == null) {
+                log.warn("CallId not found for room {}", roomId);
+                ackSender.sendAckData(Map.of(
+                    "status", "inactive",
+                    "message", "Invalid call for room"
+                ));
+                return;
+            }
+
+            // Kiểm tra trạng thái cuộc gọi
+            CallResponseDto call = callService.findById(callId);
+            if (call == null || call.getStatus() == CallStatus.ENDED) {
+                log.info("Call {} for room {} is ended or not found", callId, roomId);
+                ackSender.sendAckData(Map.of(
+                    "status", "ended",
+                    "message", "Call has ended"
+                ));
+                return;
+            }
+
+            // Trả về trạng thái room và thông tin bổ sung
+            log.info("Room {} is active for user {}", roomId, userId);
+            ackSender.sendAckData(Map.of(
+                "status", "active",
+                "callStatus", call.getStatus().toString(),
+                "users", roomUsers,
+                "userCount", roomUsers.size()
+            ));
+        });
+//        
 	}
     
     
@@ -218,6 +311,7 @@ public class SocketIOCallService {
 
     // Xử lý rời cuộc gọi
     private void handleLeaveCall(SocketIOClient client, String userId) {
+    	log.info("User {} requested to leave call ", userId);
         String roomId = findRoomForUser(userId);
         if (roomId != null) {
             handleLeaveCall(client, userId, roomId);
@@ -238,21 +332,27 @@ public class SocketIOCallService {
 
             // Cập nhật trạng thái user
             String callId = roomToCallId.get(roomId);
-//            if (callId != null) {
-//                callDynamoRepository.updateUserCall(userId, null);
-//            }
             userService.updateCallStatus(userId, null);
  
             // Nếu phòng rỗng, kết thúc cuộc gọi
             if (roomUsers.isEmpty()) {
-                if (callId != null) {
-                    callService.endCall(callId);
-                	log.info("Call {} ended, room {} removed", callId, roomId);
-                }
-                
-                rooms.remove(roomId);
-                roomToCallId.remove(roomId);
-                
+                log.info("Room {} is empty, scheduling cleanup in 30 seconds", roomId);
+                ScheduledFuture<?> timeout = scheduler.schedule(() -> {
+                    // Kiểm tra lại xem room có còn rỗng không
+                    Set<String> currentUsers = rooms.get(roomId);
+                    if (currentUsers != null && currentUsers.isEmpty()) {
+                        if (callId != null) {
+                            callService.endCall(callId);
+                            log.info("Call {} ended, room {} removed after timeout", callId, roomId);
+                        }
+                        rooms.remove(roomId);
+                        roomToCallId.remove(roomId);
+                        roomToConversationId.remove(roomId);
+                        roomTimeouts.remove(roomId);
+                    }
+                }, 2, TimeUnit.SECONDS);
+
+                roomTimeouts.put(roomId, timeout);
             }
         }
     }

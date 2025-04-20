@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -113,8 +114,8 @@ public class SocketIOChatService {
 						client.sendEvent("call_error", "NOT_AUTHENTICATED");
 						return;
 					}
-
-					Call call = callService.createCall(startCallDto.getCallId(),username, conversationId, startCallDto.getCallType());
+					String callId = UUID.randomUUID().toString();
+					Call call = callService.createCall(callId,username, conversationId, startCallDto.getCallType());
 
 					// Gửi lời mời gọi video đến tất cả participants
 
@@ -122,7 +123,7 @@ public class SocketIOChatService {
 							.conversationId(conversationId)
 							.senderId(username)
 							.type(MessageType.CALL)
-							.callId(startCallDto.getCallId())
+							.callId(callId)
 							.build());
 					
 					messageNotifier.sendCallInvitation(conversationId, "video",
@@ -135,6 +136,10 @@ public class SocketIOChatService {
 					
 					log.info("Call started by {} in conversation {}", username,
 							conversationId);
+					ackSender.sendAckData(Map.of(
+							"status", "success",
+							"message", call.getId()));
+					
 				});
 
 		socketIOServer.start();

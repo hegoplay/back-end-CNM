@@ -7,5 +7,5 @@ import lombok.Data;
 public class StartCallDto {
     private String conversationId; // ID của conversation
     private CallType callType; // Loại cuộc gọi (video/audio)
-    private String callId; // ID của cuộc gọi
+//    private String callId; // ID của cuộc gọi
 }
