@@ -1,6 +1,7 @@
 package iuh.fit.se.service;
 
 import com.corundumstudio.socketio.SocketIOClient;
+import java.util.List;
 
 import iuh.fit.se.model.dto.conversation.ConversationDetailDto;
 import iuh.fit.se.model.dto.message.MessageResponseDTO;
@@ -18,7 +19,6 @@ public interface MessageNotifier {
     void initConversation(ConversationDetailDto conversationDetail, String userId);
     void notifyNewConversation(ConversationDetailDto conversationDetail, String userId);
     void notifyRemoveConversation(String conversationId, String userId);
-    
     void sendCallInvitation(String conversationId, String callType, String initiatorId);
     void notifyClearConversation(String conversationId, String userId);
     void notifyMemberAdded(String conversationId, String memberPhone);

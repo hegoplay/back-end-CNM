@@ -70,7 +70,6 @@ public class AwsConfig {
     DynamoDbTable<Message> messageTable(DynamoDbEnhancedClient enhancedClient) {
         return enhancedClient.table("messages", TableSchema.fromBean(Message.class));
     }
-	
 	@Bean
 	DynamoDbTable<Call> callTable(DynamoDbEnhancedClient enhancedClient) {
 		return enhancedClient.table("calls", TableSchema.fromBean(Call.class));

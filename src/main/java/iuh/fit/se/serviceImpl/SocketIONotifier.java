@@ -1,5 +1,6 @@
 package iuh.fit.se.serviceImpl;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -121,6 +122,23 @@ public class SocketIONotifier implements MessageNotifier {
 		}
 	}
 
+//	@Override
+//	public void notifyNewConversation(ConversationDetailDto conversationDetail,
+//			String userId) {
+//		// TODO Auto-generated method stub
+//		log.info("Notifying new conversation: conversationId = {}, userId = {}", 
+//				conversationDetail.getId(), userId);
+//		SocketIOClient client = userClientMap.get(userId);
+//		log.info("Map: {}", userClientMap);
+//		if (client != null) {
+//			client.sendEvent("new_conversation", conversationDetail);
+//		} else {
+//			log.warn("No client found for userId: {}", userId);
+//		}
+//		client.joinRoom(conversationDetail.getId());
+//		
+//	}
+	
 	@Override
 	public void notifyNewConversation(ConversationDetailDto conversationDetail,
 			String userId) {
@@ -214,5 +232,17 @@ public class SocketIONotifier implements MessageNotifier {
         log.warn("Hasn't implement logic for notifyMemberLeft function");
     }
 
-
+//    ?????
+//	@Override
+//    public void notifyGroupEvent(String conversationId, String eventType, List<String> data) {
+//        log.info("Notifying group event: conversationId = {}, eventType = {}, data = {}", 
+//                conversationId, eventType, data);
+//        getChatNamespace().getRoomOperations(conversationId)
+//            .sendEvent("group_event", Map.of(
+//                "conversationId", conversationId,
+//                "eventType", eventType,
+//                "data", data
+//            ));
+//    }
+//		
 }

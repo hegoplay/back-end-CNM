@@ -1,6 +1,8 @@
 package iuh.fit.se.model.dto.conversation;
 
 import lombok.AllArgsConstructor;
+
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

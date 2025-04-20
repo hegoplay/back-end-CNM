@@ -12,12 +12,14 @@ import iuh.fit.se.model.dto.conversation.CreateGroupImgDto;
  * phó nhóm được xóa nhóm (admins)
  * thành viên thì không được xóa
  */
+import iuh.fit.se.model.dto.conversation.CreateGroupRequest;
+import iuh.fit.se.model.dto.conversation.MemberDto;
 
 public interface ConversationService {
 	void createFriendConversation(String userId, String friendId);
-	
+
 	List<ConversationDto> getConversations(String userId);
-	
+
 	ConversationDetailDto getConversationDetail(String conversationId);
 	
 	ConversationDetailDto getConversationDetail(String conversationId, String phone);
@@ -27,12 +29,13 @@ public interface ConversationService {
 	void updateLastUpdated(String conversationId);
 	
 	void updateConversationInCall(String conversationId, boolean inCall);
-	
+
 	void markAllMessagesAsRead(String conversationId, String userId);
-	
+
 	void deleteFriendConversation(String userId, String friendId);
 
 	
+//	---new function---
 	ConversationDetailDto createGroupChat(String creatorPhone, String conversationName, String conversationImgUrl, List<String> participants);
 	
 	ConversationDetailDto createGroupChat(CreateGroupImgDto request, String creatorPhone);
@@ -57,4 +60,16 @@ public interface ConversationService {
 	void deleteGroup(String conversationId, String userPhone);
 
 	void joinGroup(String conversationId, String userPhone);
+	
+
+
+
+	void updateAdmin(String userId, String conversationId, String targetUserId, boolean isAdmin);
+
+	void updateGroupInfo(String userId, String conversationId, String conversationName, String conversationImgUrl);
+
+	List<MemberDto> searchMembers(String conversationId, String keyword);
+
+
+	List<MemberDto> getGroupMembers(String conversationId);
 }

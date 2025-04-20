@@ -1,7 +1,5 @@
 package iuh.fit.se.model.dto.conversation;
 
-import java.util.List;
-
 import org.springframework.web.multipart.MultipartFile;
 
 import lombok.AllArgsConstructor;
@@ -10,11 +8,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class CreateGroupImgDto {
-    private String conversationName;
-    private MultipartFile conversationImgUrl;
-    private List<String> participants; // List of phone numbers, including the creator
+public class MemberDto {
+    private String phoneNumber;
+    private String name;
+    private boolean isAdmin;
+    private String baseImg;
+    private boolean isOnline; // Trạng thái online
 }
