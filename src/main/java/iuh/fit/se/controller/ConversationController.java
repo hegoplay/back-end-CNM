@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import iuh.fit.se.model.dto.conversation.ConversationDetailDto;
 import iuh.fit.se.model.dto.conversation.ConversationDto;
+import iuh.fit.se.model.dto.conversation.CreateGroupImgDto;
 import iuh.fit.se.service.ConversationService;
 import iuh.fit.se.service.MessageNotifier;
 import iuh.fit.se.service.MessageService;
@@ -100,6 +101,16 @@ public class ConversationController {
 		String creatorPhone = jwtUtils.getPhoneFromToken(jwt);
 		log.info("Trying to create group with request: {}", request);
 		ConversationDetailDto conversation = conversationService.createGroupChat(creatorPhone, request.getConversationName(), request.getConversationImgUrl(), request.getParticipants());
+		return ResponseEntity.status(HttpStatus.CREATED).body(conversation);
+	}
+	
+//	@PostMapping("/create-group-img")
+	@PostMapping("/create-group-img")
+	public ResponseEntity<ConversationDetailDto> createGroupChatWithImg(@ModelAttribute CreateGroupImgDto request, @RequestHeader("Authorization") String authHeader) {
+		String jwt = authHeader.substring(7);
+		String creatorPhone = jwtUtils.getPhoneFromToken(jwt);
+		log.info("Trying to create group with request: {}", request);
+		ConversationDetailDto conversation = conversationService.createGroupChat(request, creatorPhone);
 		return ResponseEntity.status(HttpStatus.CREATED).body(conversation);
 	}
 

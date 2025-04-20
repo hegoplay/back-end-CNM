@@ -15,6 +15,7 @@ import iuh.fit.se.model.Message;
 import iuh.fit.se.model.User;
 import iuh.fit.se.model.dto.conversation.ConversationDetailDto;
 import iuh.fit.se.model.dto.conversation.ConversationDto;
+import iuh.fit.se.model.dto.conversation.CreateGroupImgDto;
 import iuh.fit.se.model.dto.message.MessageResponseDTO;
 import iuh.fit.se.model.enumObj.ConversationType;
 import iuh.fit.se.repo.ConversationRepository;
@@ -22,8 +23,9 @@ import iuh.fit.se.repo.MessageRepository;
 import iuh.fit.se.repo.UserRepository;
 import iuh.fit.se.service.ConversationService;
 import iuh.fit.se.service.MessageNotifier;
-import iuh.fit.se.util.JwtUtils;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
@@ -32,19 +34,22 @@ import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledExcepti
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class ConversationServiceAWSImpl implements ConversationService {
 
 	@Value("${aws.region}")
 	private String region;
-	private final ConversationRepository conversationRepository;
-	private final MessageRepository messageRepository;
-	private final UserRepository userRepository;
-	private final DynamoDbTable<User> userTable;
-	private final DynamoDbTable<Conversation> conversationTable;
-	private final DynamoDbEnhancedClient enhancedClient;
-	private final MessageNotifier messageNotifier;
-	private final MessageMapper messageMapper;
-	private final ConversationMapper conversationMapper;
+	ConversationRepository conversationRepository;
+	MessageRepository messageRepository;
+	UserRepository userRepository;
+	DynamoDbTable<User> userTable;
+	DynamoDbTable<Conversation> conversationTable;
+	DynamoDbEnhancedClient enhancedClient;
+	MessageNotifier messageNotifier;
+	MessageMapper messageMapper;
+	ConversationMapper conversationMapper;
+	AwsService awsService;
+	
 
 	@Override
 	public void createFriendConversation(String userPhone, String friendPhone) {
@@ -367,22 +372,17 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		if (participants.size() < 3) {
 			throw new IllegalArgumentException("Group chat must have at least 3 members");
 		}
+		List<User> users = new ArrayList<>();
 		for (String phone : participants) {
 			User user = userRepository.findByPhone(phone);
 			if (user == null) {
 				throw new IllegalArgumentException("User with phone " + phone + " not found");
 			}
+			users.add(user);
 		}
+		
 		String baseId = LocalDateTime.now().toString().replace(":", "-") + "-" + UUID.randomUUID();
 		String conversationId = baseId;
-
-		int retry = 0;
-		while (conversationRepository.findById(conversationId) != null) {
-			if (++retry > 5) {
-				throw new RuntimeException("Failed to generate unique conversation ID");
-			}
-			conversationId = LocalDateTime.now().toString().replace(":", "-") + "-" + UUID.randomUUID();
-		}
 
 		Conversation conversation = Conversation.builder()
 				.id(conversationId)
@@ -399,8 +399,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 				.currentCallId(null)
 				.build();
 		conversationRepository.save(conversation);
-		for (String phone : participants) {
-			User user = userRepository.findByPhone(phone);
+		for (User user : users) {
 			if (user.getConversations() == null) {
 				user.setConversations(new ArrayList<>());
 			}
@@ -409,11 +408,32 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		}
 		ConversationDetailDto conversationDetailDto = getConversationDetail(conversationId);
 		for (String phone : participants) {
-			//messageNotifier.notifyNewConversation(conversationDetailDto, phone);
+//			messageNotifier.notifyNewConversation(conversationDetailDto, phone);
 		}
 		return conversationDetailDto;
 	}
 
+	@Override
+	public ConversationDetailDto createGroupChat(CreateGroupImgDto request, String creatorPhone) {
+		// TODO Auto-generated method stubub
+		if (!request.getParticipants().contains(creatorPhone)) {
+			throw new IllegalArgumentException("Creator must be in the participants list");
+		}
+		if (request.getParticipants().size() < 3) {
+			throw new IllegalArgumentException("Group chat must have at least 3 members");
+		}
+		
+		try {
+			String imgUrl = awsService.uploadToS3(request.getConversationImgUrl());
+			createGroupChat(creatorPhone, request.getConversationName(), imgUrl, request.getParticipants());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			throw new RuntimeException("Error uploading image to S3: " + e.getMessage());
+		}
+		
+		return null;
+	}
+	
 	@Override
 	public void addMembersToGroup(String conversationId, List<String> newMemberPhones) {
 		Conversation conversation = conversationRepository.findById(conversationId);
@@ -590,4 +610,5 @@ public class ConversationServiceAWSImpl implements ConversationService {
 
 		//messageNotifier.notifyMemberAdded(conversationId, userPhone);
 	}
+	
 }

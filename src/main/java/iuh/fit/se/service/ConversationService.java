@@ -4,6 +4,7 @@ import java.util.List;
 
 import iuh.fit.se.model.dto.conversation.ConversationDetailDto;
 import iuh.fit.se.model.dto.conversation.ConversationDto;
+import iuh.fit.se.model.dto.conversation.CreateGroupImgDto;
 
 /*
  * 
@@ -33,6 +34,8 @@ public interface ConversationService {
 
 	
 	ConversationDetailDto createGroupChat(String creatorPhone, String conversationName, String conversationImgUrl, List<String> participants);
+	
+	ConversationDetailDto createGroupChat(CreateGroupImgDto request, String creatorPhone);
 	
 	/*
 	 * ai cũng làm được
