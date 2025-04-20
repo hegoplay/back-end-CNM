@@ -14,11 +14,9 @@ import iuh.fit.se.mapper.UserMapper;
 import iuh.fit.se.model.Conversation;
 import iuh.fit.se.model.Message;
 import iuh.fit.se.model.User;
-import iuh.fit.se.model.dto.UserResponseDto;
 import iuh.fit.se.model.dto.conversation.ConversationDetailDto;
 import iuh.fit.se.model.dto.conversation.ConversationDto;
 import iuh.fit.se.model.dto.conversation.CreateGroupImgDto;
-import iuh.fit.se.model.dto.conversation.CreateGroupRequest;
 import iuh.fit.se.model.dto.conversation.MemberDto;
 import iuh.fit.se.model.dto.message.MessageResponseDTO;
 import iuh.fit.se.model.enumObj.ConversationType;
@@ -27,7 +25,6 @@ import iuh.fit.se.repo.MessageRepository;
 import iuh.fit.se.repo.UserRepository;
 import iuh.fit.se.service.ConversationService;
 import iuh.fit.se.service.MessageNotifier;
-import iuh.fit.se.service.UserService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -39,23 +36,22 @@ import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledExcepti
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class ConversationServiceAWSImpl implements ConversationService {
 
 	@Value("${aws.region}")
 	private String region;
-	ConversationRepository conversationRepository;
-	MessageRepository messageRepository;
-	UserRepository userRepository;
-	DynamoDbTable<User> userTable;
-	DynamoDbTable<Conversation> conversationTable;
-	DynamoDbEnhancedClient enhancedClient;
-	MessageNotifier messageNotifier;
-	MessageMapper messageMapper;
-	ConversationMapper conversationMapper;
-	AwsService awsService;
-	UserService userService;
-	UserMapper userMapper;
+	final ConversationRepository conversationRepository;
+	final MessageRepository messageRepository;
+	final UserRepository userRepository;
+	final DynamoDbTable<User> userTable;
+	final DynamoDbTable<Conversation> conversationTable;
+	final DynamoDbEnhancedClient enhancedClient;
+	final MessageNotifier messageNotifier;
+	final MessageMapper messageMapper;
+	final ConversationMapper conversationMapper;
+	final AwsService awsService;
+	final UserMapper userMapper;
 
 	@Override
 	public void createFriendConversation(String userPhone, String friendPhone) {
@@ -148,7 +144,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 						.fromConversationToDto(conversation);
 				// Thêm tin nhắn cuối vào conversationDto
 				appendLastMessageIntoConversationDto(conversationDto);
-				reDefineConversationNameAndImgUrl(conversationDto, phone);
+				redefineConversationNameAndImgUrl(conversationDto, phone);
 
 				conversationDtos.add(conversationDto);
 			}
@@ -187,10 +183,9 @@ public class ConversationServiceAWSImpl implements ConversationService {
 
 		conversationDetailDto.setMessageDetails((messages));
 
-		reDefineConversationNameAndImgUrl(conversationDetailDto, phone);
+		redefineConversationNameAndImgUrl(conversationDetailDto, phone);
 
-		log.info("Conversation detail after redefine: {}",
-				conversationDetailDto);
+		log.info("Conversation detail after redefine: {}",conversationDetailDto);
 
 		return conversationDetailDto;
 	}
@@ -326,7 +321,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		}
 	}
 
-	private void reDefineConversationNameAndImgUrl(
+	private void redefineConversationNameAndImgUrl(
 			ConversationDetailDto conversationDto, String phone) {
 		String conversationId = conversationDto.getId();
 		// cài đặt lại conversation name và conversation img url
@@ -343,7 +338,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		}
 	}
 
-	private void reDefineConversationNameAndImgUrl(
+	private void redefineConversationNameAndImgUrl(
 			ConversationDto conversationDto, String phone) {
 		String conversationId = conversationDto.getId();
 		// cài đặt lại conversation name và conversation img url
@@ -434,8 +429,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		ConversationDetailDto conversationDetailDto = getConversationDetail(
 				conversationId);
 		for (String phone : participants) {
-			// messageNotifier.notifyNewConversation(conversationDetailDto,
-			// phone);
+			 messageNotifier.notifyNewConversation(conversationDetailDto,phone);
 		}
 		return conversationDetailDto;
 	}
@@ -560,6 +554,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		// messageNotifier.notifyMemberLeft(conversationId, memberPhone);
 	}
 
+//	
 	@Override
 	public void leaveGroup(String conversationId, String userPhone,
 			String newLeaderPhone) {
@@ -583,8 +578,8 @@ public class ConversationServiceAWSImpl implements ConversationService {
 							"New leader must be a current member of the group");
 				}
 				conversation.setLeader(newLeaderPhone);
-				// messageNotifier.notifyNewLeader(conversationId,
-				// newLeaderPhone);
+				 messageNotifier.notifyNewLeader(conversationId,
+				 newLeaderPhone);
 			}
 			if (conversation.getAdmins().contains(userPhone)) {
 				conversation.getAdmins().remove(userPhone);
@@ -597,7 +592,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 				member.getConversations().remove(conversationId);
 				userRepository.save(member);
 			}
-			// messageNotifier.notifyMemberLeft(conversationId, memberPhone);
+			 messageNotifier.notifyMemberLeft(conversationId, member.getPhoneNumber());
 		} else if (participantCount == 3) {
 			// Disband the group by removing the conversation from all
 			// participants' lists
@@ -615,7 +610,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 					"Group has less than 3 members, cannot leave");
 		}
 	}
-
+// thêm notify thành công 
 	public void deleteGroup(String conversationId, String leaderPhone) {
 		Conversation conversation = conversationRepository
 				.findById(conversationId);
@@ -630,9 +625,13 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			User user = userRepository.findByPhone(participantPhone);
 			if (user != null && user.getConversations() != null) {
 				user.getConversations().remove(conversationId);
+				messageNotifier.notifyRemoveConversation(conversationId,
+						participantPhone);
 				userRepository.save(user);
 			}
 		}
+		conversationRepository.deleteById(conversationId);
+		
 	}
 
 	public void joinGroup(String conversationId, String userPhone) {
@@ -667,7 +666,8 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		// messageNotifier.notifyMemberAdded(conversationId, userPhone);
 	}
 
-	// Tạo gr
+	// update admin
+	
 	@Override
 	public void updateAdmin(String userId, String conversationId,
 			String targetUserId, boolean isAdmin) {
@@ -788,5 +788,4 @@ public class ConversationServiceAWSImpl implements ConversationService {
 				.toList();
 		return memberDtos;
 	}
-
 }

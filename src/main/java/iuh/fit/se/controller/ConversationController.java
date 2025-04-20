@@ -1,15 +1,11 @@
 package iuh.fit.se.controller;
 
 import java.util.List;
-import java.util.Map;
 
-import iuh.fit.se.model.dto.conversation.CreateGroupRequest;
-import iuh.fit.se.util.FormatUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -21,10 +17,9 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import iuh.fit.se.model.Conversation;
 import iuh.fit.se.model.dto.conversation.ConversationDetailDto;
 import iuh.fit.se.model.dto.conversation.ConversationDto;
 import iuh.fit.se.model.dto.conversation.CreateGroupImgDto;
@@ -33,15 +28,14 @@ import iuh.fit.se.model.dto.conversation.MemberDto;
 import iuh.fit.se.model.enumObj.ConversationType;
 import iuh.fit.se.service.ConversationService;
 import iuh.fit.se.service.MessageNotifier;
-import iuh.fit.se.service.MessageService;
 import iuh.fit.se.service.UserService;
 import iuh.fit.se.serviceImpl.AwsService;
+import iuh.fit.se.util.FormatUtils;
 import iuh.fit.se.util.JwtUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import software.amazon.awssdk.thirdparty.jackson.core.JsonProcessingException;
 
 @RestController
 @RequestMapping("/api/conversations")
@@ -149,8 +143,6 @@ public class ConversationController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(conversation);
 	}
 	
-//	@PostMapping("/create-group-img")
-
 	@PostMapping("/{conversationId}/add-members")
 	public ResponseEntity<Void> addMembers(@PathVariable String conversationId, @RequestBody List<String> newMembersPhone, @RequestHeader("Authorization") String authHeader) {
 		try {
@@ -170,9 +162,7 @@ public class ConversationController {
 			return ResponseEntity.ok().build();
 		} catch (IllegalArgumentException e) {
 			return ResponseEntity.badRequest().build();
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+		} 
 	}
 
 	@DeleteMapping("/{conversationId}/delete-member")
@@ -216,9 +206,6 @@ public class ConversationController {
 		} catch (IllegalArgumentException e) {
 			log.warn("Delete group failed due to invalid request: {}", e.getMessage());
 			return ResponseEntity.badRequest().build();
-		} catch (Exception e) {
-			log.error("Failed to delete group: {}", e.getMessage(), e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 		}
 	}
 
@@ -238,7 +225,6 @@ public class ConversationController {
 		return ResponseEntity.ok().build();
 	}
 
-//	sẽ chuyển sang List<Id> sau
 	@PostMapping(value = "/group", consumes = { "multipart/form-data" })
 	public ResponseEntity<ConversationDetailDto> createGroup(@RequestHeader("Authorization") String authHeader,
 			@RequestPart("name") String name, @RequestPart(value = "baseImg", required = false) MultipartFile baseImg,
@@ -258,7 +244,6 @@ public class ConversationController {
 			throw new RuntimeException("Fail to create group: {}");
 		}
 	}
-
 
 	@GetMapping("/{conversationId}/members")
 	public ResponseEntity<List<MemberDto>> getGroupMembers(@PathVariable String conversationId,
