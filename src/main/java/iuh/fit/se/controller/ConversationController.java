@@ -27,26 +27,26 @@ import lombok.extern.slf4j.Slf4j;
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @Slf4j
 public class ConversationController {
-		
+
 	ConversationService conversationService;
 	MessageNotifier messageNotifier;
 	JwtUtils jwtUtils;
-	UserService userService;	
-	
-	
+	UserService userService;
+
+
 	@GetMapping("/")
 	public ResponseEntity<List<ConversationDto>> getConversations(@RequestHeader("Authorization") String authHeader) {
 		// Lấy JWT bằng cách loại bỏ "Bearer " prefix
 		String jwt = authHeader.substring(7);
-		
+
 		// Lấy phone từ token
 		String phone = jwtUtils.getPhoneFromToken(jwt);
-		
+
 		List<ConversationDto> conversations = conversationService.getConversations(phone);
-		
+
 		return ResponseEntity.ok(conversations);
 	}
-	
+
 	@GetMapping("/{conversationId}")
 	public ResponseEntity<ConversationDetailDto> getConversationDetail(@PathVariable String conversationId, @RequestHeader("Authorization") String authHeader){
 //		code di copilot
@@ -58,7 +58,7 @@ public class ConversationController {
 		}
 		return ResponseEntity.ok(conversation);
 	}
-//	request thang nay để gửi event để nhận dữ liệu currentConversation
+	//	request thang nay để gửi event để nhận dữ liệu currentConversation
 	@GetMapping("/initialize/{conversationId}")
 	public ResponseEntity<ConversationDetailDto> markNotificationAsRead(@PathVariable String conversationId, @RequestHeader("Authorization") String authHeader) {
 		log.info("Marking notification as read for conversation: {}", conversationId);
@@ -81,7 +81,7 @@ public class ConversationController {
 		String jwt = authHeader.substring(7);
 		String phone = jwtUtils.getPhoneFromToken(jwt);
 //		conversationService.deleteFriendConversation(conversationId, phone);
-		
+
 		return ResponseEntity.ok().build();
 	}
 
@@ -118,7 +118,7 @@ public class ConversationController {
 			for(String newMemberPhone : newMembersPhone) {
 				newMemberPhone = FormatUtils.formatPhoneNumber(newMemberPhone);
 			}
-			conversationService.addMembersToGroup(conversationId, userPhone, newMembersPhone);
+			conversationService.addMembersToGroup(conversationId, newMembersPhone);
 			return ResponseEntity.ok().build();
 		} catch (IllegalArgumentException e) {
 			return ResponseEntity.badRequest().build();
@@ -174,4 +174,19 @@ public class ConversationController {
 		}
 	}
 
+	@PostMapping("/{conversationId}/join")
+	public ResponseEntity<Void> joinGroup(
+			@PathVariable String conversationId,
+			@RequestHeader("Authorization") String authHeader) {
+
+		String jwt = authHeader.substring(7);
+		String userPhone = jwtUtils.getPhoneFromToken(jwt);
+		if (userPhone == null || userPhone.isEmpty()) {
+			throw new IllegalArgumentException("Invalid user phone retrieved from token");
+		}
+		log.info("User {} is attempting to join group with ID: {}", userPhone, conversationId);
+		userPhone = FormatUtils.formatPhoneNumber(userPhone);
+		conversationService.joinGroup(conversationId, userPhone);
+		return ResponseEntity.ok().build();
+	}
 }

@@ -45,7 +45,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 	private final MessageNotifier messageNotifier;
 	private final MessageMapper messageMapper;
 	private final ConversationMapper conversationMapper;
-	
+
 	@Override
 	public void createFriendConversation(String userPhone, String friendPhone) {
 		// TODO Auto-generated method stub
@@ -60,9 +60,9 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			log.warn("User with id {} not found", friendPhone);
 			return;
 		}
-		
+
 		String conversationId = userPhone + "_" + friendPhone;
-		
+
 		if(user.getConversations().contains(conversationId)) {
 			log.warn("Conversation already exists");
 			return;
@@ -71,50 +71,50 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			log.warn("Conversation already exists");
 			return;
 		}
-		
+
 		if (user.getConversations() == null) {
 			user.setConversations(new ArrayList<>());
 		}
 		if (friend.getConversations() == null) {
 			friend.setConversations(new ArrayList<>());
 		}
-		
+
 		user.getConversations().add(conversationId);
 		friend.getConversations().add(conversationId);
-		
+
 		Conversation conversation = Conversation.builder()
-						.id(userPhone + "_" + friendPhone)
-						.callInProgress(false)
-						.type(ConversationType.PRIVATE)
-						.participants(List.of(userPhone, friendPhone))
-						.createdAt(LocalDateTime.now())
-						.updatedAt(LocalDateTime.now())
-						.conversationName("ban")
-						.conversationImgUrl("xxx")
-						.leader(userPhone)
-						.admins(List.of(userPhone, friendPhone))
-						.messages(List.of())
-						.currentCallId(null)
-						.build();
+				.id(userPhone + "_" + friendPhone)
+				.callInProgress(false)
+				.type(ConversationType.PRIVATE)
+				.participants(List.of(userPhone, friendPhone))
+				.createdAt(LocalDateTime.now())
+				.updatedAt(LocalDateTime.now())
+				.conversationName("ban")
+				.conversationImgUrl("xxx")
+				.leader(userPhone)
+				.admins(List.of(userPhone, friendPhone))
+				.messages(List.of())
+				.currentCallId(null)
+				.build();
 		try {
-	        enhancedClient.transactWriteItems(request -> request
-	            .addPutItem(conversationTable, conversation)
-	            .addPutItem(userTable, user)
-	            .addPutItem(userTable, friend)
-	        );
-	        log.info("Transaction completed successfully");
-	        ConversationDetailDto conversationDetailDto = getConversationDetail(conversationId);
-	        messageNotifier.notifyNewConversation(conversationDetailDto, userPhone);
-	        messageNotifier.notifyNewConversation(conversationDetailDto, friendPhone);
-	        
-	    } catch (TransactionCanceledException e) {
-	        log.error("Transaction cancelled: {}", e.cancellationReasons());
-	        throw new RuntimeException("Transaction failed", e);
-	    }
+			enhancedClient.transactWriteItems(request -> request
+					.addPutItem(conversationTable, conversation)
+					.addPutItem(userTable, user)
+					.addPutItem(userTable, friend)
+			);
+			log.info("Transaction completed successfully");
+			ConversationDetailDto conversationDetailDto = getConversationDetail(conversationId);
+			messageNotifier.notifyNewConversation(conversationDetailDto, userPhone);
+			messageNotifier.notifyNewConversation(conversationDetailDto, friendPhone);
+
+		} catch (TransactionCanceledException e) {
+			log.error("Transaction cancelled: {}", e.cancellationReasons());
+			throw new RuntimeException("Transaction failed", e);
+		}
 	}
-/**
- * cái phone này là của người dùng đang đăng nhập
- */
+	/**
+	 * cái phone này là của người dùng đang đăng nhập
+	 */
 	@Override
 	public List<ConversationDto> getConversations(String phone) {
 		// TODO Auto-generated method stub
@@ -139,19 +139,19 @@ public class ConversationServiceAWSImpl implements ConversationService {
 //		Thêm tin nhắn cuối vào conversationDto		
 				appendLastMessageIntoConversationDto(conversationDto);
 				reDefineConversationNameAndImgUrl(conversationDto, phone);
-				
-				
-				
+
+
+
 				conversationDtos.add(conversationDto);
 			}
 			return conversationDtos;
 		} catch (Exception e) {
 			log.error("Error getting conversations: {}", e.getMessage());
 			throw new RuntimeException("Error getting conversations", e);
-		}		
+		}
 	}
 
-	
+
 	@Override
 	public ConversationDetailDto getConversationDetail(String conversationId, String phone) {
 		// TODO Auto-generated method stub
@@ -162,26 +162,26 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		}
 		log.info(conversation.toString());
 		ConversationDetailDto conversationDetailDto = conversationMapper.fromConversationToDetailDto(conversation);
-		
+
 		log.info("Conversation detail: {}", conversationDetailDto);
-		
+
 		List<Message> messagesList = messageRepository.findMessagesByConversationId(conversationId);
 		List<MessageResponseDTO> messages = new ArrayList<>();
-		
+
 		for (Message message : messagesList) {
 			MessageResponseDTO messageResponseDTO = messageMapper.toMessageResponseDto(message);
 			messages.add(messageResponseDTO);
 		}
-		
+
 		conversationDetailDto.setMessageDetails((messages));
-		
+
 		reDefineConversationNameAndImgUrl(conversationDetailDto, phone);
-		
+
 		log.info("Conversation detail after redefine: {}", conversationDetailDto);
-		
+
 		return conversationDetailDto;
 	}
-	
+
 	@Override
 	public ConversationDetailDto getConversationDetail(String conversationId) {
 		// TODO Auto-generated method stub
@@ -192,19 +192,19 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		}
 		log.info(conversation.toString());
 		ConversationDetailDto conversationDetailDto = conversationMapper.fromConversationToDetailDto(conversation);
-		
+
 		log.info("Conversation detail: {}", conversationDetailDto);
-		
+
 		List<Message> messagesList = messageRepository.findMessagesByConversationId(conversationId);
 		List<MessageResponseDTO> messages = new ArrayList<>();
-		
+
 		for (Message message : messagesList) {
 			MessageResponseDTO messageResponseDTO = messageMapper.toMessageResponseDto(message);
 			messages.add(messageResponseDTO);
 		}
-		
+
 		conversationDetailDto.setMessageDetails((messages));
-		
+
 		return conversationDetailDto;
 	}
 
@@ -222,7 +222,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 	@Override
 	public void markAllMessagesAsRead(String conversationId, String userId) {
 		// TODO Auto-generated method stub
-		
+
 		Conversation conversation = conversationRepository.findById(conversationId);
 		if (conversation == null) {
 			log.warn("Conversation with id {} not found", conversationId);
@@ -262,7 +262,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		if (conversation == null) {
 			conversation = conversationRepository.findById(friendId + "_" + userId);
 			if (conversation == null) {
-				
+
 				log.warn("Conversation with id {} not found", conversationId);
 				return;
 			}
@@ -276,7 +276,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		if (friend.getConversations() != null) {
 			friend.removeConversationId(conversation.getId());;
 		}
-		
+
 		messageRepository.deleteMessagesByConversationId(conversation.getId());
 		conversationRepository.deleteById(conversation.getId());
 		userRepository.save(user);
@@ -297,45 +297,45 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			dto.setLastMessage(lastMessageDto);
 		}
 	}
-	
+
 	private void reDefineConversationNameAndImgUrl(ConversationDetailDto conversationDto,
-			String phone) {
-			String conversationId = conversationDto.getId();
+												   String phone) {
+		String conversationId = conversationDto.getId();
 //			cài đặt lại conversation name và conversation img url
-			if (conversationDto.getType() == ConversationType.PRIVATE) {
-				String[] split = conversationId.split("_");
-				String otherUserId = split[0].equals(phone) ? split[1] : split[0];
-				User otherUser = userRepository.findByPhone(otherUserId);
-				if (otherUser != null) {
-					conversationDto.setConversationName(otherUser.getName());
-					conversationDto.setConversationImgUrl(otherUser.getBaseImg());
-				} else {
-					log.warn("User with id {} not found", otherUserId);
-				}
+		if (conversationDto.getType() == ConversationType.PRIVATE) {
+			String[] split = conversationId.split("_");
+			String otherUserId = split[0].equals(phone) ? split[1] : split[0];
+			User otherUser = userRepository.findByPhone(otherUserId);
+			if (otherUser != null) {
+				conversationDto.setConversationName(otherUser.getName());
+				conversationDto.setConversationImgUrl(otherUser.getBaseImg());
+			} else {
+				log.warn("User with id {} not found", otherUserId);
 			}
+		}
 	}
-	
+
 	private void reDefineConversationNameAndImgUrl(ConversationDto conversationDto,
-			String phone) {
-			String conversationId = conversationDto.getId();
+												   String phone) {
+		String conversationId = conversationDto.getId();
 //			cài đặt lại conversation name và conversation img url
-			if (conversationDto.getType() == ConversationType.PRIVATE) {
-				String[] split = conversationId.split("_");
-				String otherUserId = split[0].equals(phone) ? split[1] : split[0];
-				User otherUser = userRepository.findByPhone(otherUserId);
-				if (otherUser != null) {
-					conversationDto.setConversationName(otherUser.getName());
-					conversationDto.setConversationImgUrl(otherUser.getBaseImg());
-				} else {
-					log.warn("User with id {} not found", otherUserId);
-				}
+		if (conversationDto.getType() == ConversationType.PRIVATE) {
+			String[] split = conversationId.split("_");
+			String otherUserId = split[0].equals(phone) ? split[1] : split[0];
+			User otherUser = userRepository.findByPhone(otherUserId);
+			if (otherUser != null) {
+				conversationDto.setConversationName(otherUser.getName());
+				conversationDto.setConversationImgUrl(otherUser.getBaseImg());
+			} else {
+				log.warn("User with id {} not found", otherUserId);
 			}
+		}
 	}
 	@Override
 	public ConversationDto getConversationById(String conversationId) {
 		// TODO Auto-generated method stub
 
-	
+
 		Conversation conversation = conversationRepository.findById(conversationId);
 		if (conversation == null) {
 			log.warn("Conversation with id {} not found", conversationId);
@@ -347,7 +347,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 	}
 	@Override
 	public void updateConversationInCall(String conversationId,
-			boolean inCall) {
+										 boolean inCall) {
 		// TODO Auto-generated method stub
 		Conversation conversation = conversationRepository.findById(conversationId);
 		if (conversation == null) {
@@ -358,7 +358,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		conversationRepository.save(conversation);
 		log.info("Conversation {} updated to inCall: {}", conversationId, inCall);
 	}
-	
+
 
 	public ConversationDetailDto createGroupChat(String creatorPhone, String conversationName, String conversationImgUrl, List<String> participants) {
 		if (!participants.contains(creatorPhone)) {
@@ -415,13 +415,10 @@ public class ConversationServiceAWSImpl implements ConversationService {
 	}
 
 	@Override
-	public void addMembersToGroup(String conversationId, String leaderPhone, List<String> newMemberPhones) {
+	public void addMembersToGroup(String conversationId, List<String> newMemberPhones) {
 		Conversation conversation = conversationRepository.findById(conversationId);
 		if (conversation == null) {
 			throw new RuntimeException("Conversation not found");
-		}
-		if (!conversation.getLeader().equals(leaderPhone)) {
-			throw new RuntimeException("Only the leader can add members");
 		}
 		if (newMemberPhones == null || newMemberPhones.isEmpty()) {
 			throw new RuntimeException("No new members provided");
@@ -457,14 +454,26 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		}
 	}
 
-	@Override
-	public void removeMemberFromGroup(String conversationId, String leaderPhone, String memberPhone) {
+	public void removeMemberFromGroup(String conversationId, String removerPhone, String memberPhone) {
 		Conversation conversation = conversationRepository.findById(conversationId);
 		if (conversation == null) {
 			throw new RuntimeException("Conversation not found");
 		}
-		if (!conversation.getLeader().equals(leaderPhone)) {
-			throw new RuntimeException("Only the leader can remove members");
+		// Ensure remover is a participant
+		if (!conversation.getParticipants().contains(removerPhone)) {
+			throw new RuntimeException("Remover is not a member of the group");
+		}
+		// Only leader and admins can remove members
+		if (!conversation.getLeader().equals(removerPhone) && !conversation.getAdmins().contains(removerPhone)) {
+			throw new RuntimeException("Only the leader and admins can remove members");
+		}
+		// Prevent removing the leader
+		if (memberPhone.equals(conversation.getLeader())) {
+			throw new RuntimeException("Cannot remove the leader");
+		}
+		// Only leader can remove admins
+		if (conversation.getAdmins().contains(memberPhone) && !conversation.getLeader().equals(removerPhone)) {
+			throw new RuntimeException("Only the leader can remove admins");
 		}
 		if (!conversation.getParticipants().contains(memberPhone)) {
 			throw new RuntimeException("Member not in the group");
@@ -473,6 +482,10 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			throw new RuntimeException("Cannot remove member from a group with only 3 members");
 		}
 		conversation.getParticipants().remove(memberPhone);
+		// If member is an admin, remove from admins list
+		if (conversation.getAdmins().contains(memberPhone)) {
+			conversation.getAdmins().remove(memberPhone);
+		}
 		conversationRepository.save(conversation);
 		User member = userRepository.findByPhone(memberPhone);
 		if (member != null && member.getConversations() != null) {
@@ -483,17 +496,17 @@ public class ConversationServiceAWSImpl implements ConversationService {
 	}
 
 	@Override
-	public void leaveGroup(String conversationId, String memberPhone, String newLeaderPhone) {
+	public void leaveGroup(String conversationId, String userPhone, String newLeaderPhone) {
 		Conversation conversation = conversationRepository.findById(conversationId);
 		if (conversation == null) {
 			throw new RuntimeException("Conversation not found");
 		}
-		if (!conversation.getParticipants().contains(memberPhone)) {
+		if (!conversation.getParticipants().contains(userPhone)) {
 			throw new RuntimeException("Member not in the group");
 		}
 		int participantCount = conversation.getParticipants().size();
 		if (participantCount > 3) {
-			if (conversation.getLeader().equals(memberPhone)) {
+			if (conversation.getLeader().equals(userPhone)) {
 				if (newLeaderPhone == null || newLeaderPhone.isEmpty()) {
 					throw new RuntimeException("New leader must be specified when the leader leaves");
 				}
@@ -503,9 +516,13 @@ public class ConversationServiceAWSImpl implements ConversationService {
 				conversation.setLeader(newLeaderPhone);
 				//messageNotifier.notifyNewLeader(conversationId, newLeaderPhone);
 			}
-			conversation.getParticipants().remove(memberPhone);
+			if(conversation.getAdmins().contains(userPhone)) {
+				conversation.getAdmins().remove(userPhone);
+			}
+			conversation.getParticipants().remove(userPhone);
+
 			conversationRepository.save(conversation);
-			User member = userRepository.findByPhone(memberPhone);
+			User member = userRepository.findByPhone(userPhone);
 			if (member != null && member.getConversations() != null) {
 				member.getConversations().remove(conversationId);
 				userRepository.save(member);
@@ -542,5 +559,35 @@ public class ConversationServiceAWSImpl implements ConversationService {
 				userRepository.save(user);
 			}
 		}
+	}
+
+	public void joinGroup(String conversationId, String userPhone) {
+		Conversation conversation = conversationRepository.findById(conversationId);
+		if (conversation == null) {
+			throw new RuntimeException("Conversation not found");
+		}
+		if (!conversation.getType().equals(ConversationType.GROUP)) {
+			throw new RuntimeException("Can only join group conversations");
+		}
+
+		if (conversation.getParticipants().contains(userPhone)) {
+			throw new RuntimeException("User is already a member of the group");
+		}
+
+		User user = userRepository.findByPhone(userPhone);
+		if (user == null) {
+			throw new RuntimeException("User with phone " + userPhone + " not found");
+		}
+
+		conversation.getParticipants().add(userPhone);
+		conversationRepository.save(conversation);
+
+		if (user.getConversations() == null) {
+			user.setConversations(new ArrayList<>());
+		}
+		user.getConversations().add(conversationId);
+		userRepository.save(user);
+
+		//messageNotifier.notifyMemberAdded(conversationId, userPhone);
 	}
 }

@@ -37,7 +37,7 @@ public interface ConversationService {
 	/*
 	 * ai cũng làm được
 	 */
-	void addMembersToGroup(String conversationId, String leaderPhone, List<String> newMemberPhones);
+	void addMembersToGroup(String conversationId, List<String> newMembersPhone);
 
 	/*
 	 * admin vs leader làm được
@@ -52,4 +52,6 @@ public interface ConversationService {
 	 */
 	
 	void deleteGroup(String conversationId, String userPhone);
+
+	void joinGroup(String conversationId, String userPhone);
 }
