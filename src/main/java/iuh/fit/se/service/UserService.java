@@ -25,7 +25,7 @@ public interface UserService {
 	
 	UserResponseDto updateUserInfo(String phone, UserUpdateRequestJSON request);
 	
-	void updateUserStatus(String phone, String status);
+	void updateUserStatus(String phone, boolean isOnline);
 	
 	void deleteUser(String phone);
 	

@@ -7,4 +7,5 @@ import lombok.Data;
 @Data
 public class AddMemberRequestDto {
 	private List<String> newMembersPhone;
+	
 }

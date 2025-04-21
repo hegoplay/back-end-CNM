@@ -214,6 +214,7 @@ public class SocketIONotifier implements MessageNotifier {
     public void notifyMemberLeft(String conversationId, String memberPhone) {
         log.warn("Hasn't implement logic for notifyMemberLeft function");
     }
+//    ???
     @Override
     public void notifyGroupEvent(String conversationId, String eventType, List<String> data) {
         log.info("Notifying group event: conversationId = {}, eventType = {}, data = {}", 
@@ -226,5 +227,14 @@ public class SocketIONotifier implements MessageNotifier {
             ));
     }
 
-//    ?????		
+	@Override
+	public void notifyConversationUpdate(
+			ConversationDetailDto conversationDetail) {
+		// TODO Auto-generated method stub
+		log.info("Notifying conversation update: conversationId = {}",
+				conversationDetail.getId());	
+		getChatNamespace().getRoomOperations(conversationDetail.getId())
+				.sendEvent("conversation_update", conversationDetail);
+	}
+	
 }

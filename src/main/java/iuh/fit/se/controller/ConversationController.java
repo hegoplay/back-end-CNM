@@ -27,6 +27,7 @@ import iuh.fit.se.model.dto.conversation.CreateGroupImgDto;
 import iuh.fit.se.model.dto.conversation.CreateGroupRequest;
 import iuh.fit.se.model.dto.conversation.LeaveGroupRequestDto;
 import iuh.fit.se.model.dto.conversation.MemberDto;
+import iuh.fit.se.model.dto.conversation.UpdateAdminRequestDto;
 import iuh.fit.se.model.enumObj.ConversationType;
 import iuh.fit.se.service.ConversationService;
 import iuh.fit.se.service.MessageNotifier;
@@ -286,14 +287,15 @@ public class ConversationController {
 
 	@PutMapping("/{conversationId}/admin")
 	public ResponseEntity<Void> updateAdmin(@RequestHeader("Authorization") String authHeader,
-			@PathVariable String conversationId, @RequestParam String targetUserId, @RequestParam boolean isAdmin) {
+			@PathVariable String conversationId, @RequestBody UpdateAdminRequestDto request) {
 		try {
 			String jwt = authHeader.substring(7);
 			String phone = jwtUtils.getPhoneFromToken(jwt);
-			if (!userService.isExistPhone(targetUserId)) {
+			String targetUserPhone = FormatUtils.formatPhoneNumber(request.getTargetUserId());
+			if (!userService.isExistPhone(targetUserPhone)) {
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
 			}
-			conversationService.updateAdmin(phone, conversationId, targetUserId, isAdmin);
+			conversationService.updateAdmin(phone, conversationId, targetUserPhone, request.isAdmin());
 			return ResponseEntity.ok().build();
 		} catch (Exception e) {
 			log.error("Failed to update admin: {}", e.getMessage());

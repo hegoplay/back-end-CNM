@@ -533,7 +533,15 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			member.getConversations().remove(conversationId);
 			userRepository.save(member);
 		}
-		// messageNotifier.notifyMemberLeft(conversationId, memberPhone);
+		ConversationDetailDto conversationDetailDto = conversationMapper
+				.fromConversationToDetailDto(conversation);
+		conversationDetailDto.setParticipantsDetails(getGroupMembers(conversationId));
+		conversationDetailDto.setMessageDetails(messageRepository.findMessagesByConversationId(conversationId)
+				.stream().map(messageMapper::toMessageResponseDto)
+				.toList());
+		conversationDetailDto.setUpdatedAt(conversation.getUpdatedAt());
+//		messageNotifier.notifyMemberLeft(conversationId, memberPhone);
+		messageNotifier.notifyConversationUpdate(conversationDetailDto);
 	}
 
 	//
@@ -560,7 +568,17 @@ public class ConversationServiceAWSImpl implements ConversationService {
 							"New leader must be a current member of the group");
 				}
 				conversation.setLeader(newLeaderPhone);
-				messageNotifier.notifyNewLeader(conversationId, newLeaderPhone);
+				if (!conversation.getAdmins().contains(newLeaderPhone)) {
+					conversation.getAdmins().add(newLeaderPhone);
+				}
+//				messageNotifier.notifyNewLeader(conversationId, newLeaderPhone);
+				
+				ConversationDetailDto conversationDetailDto = conversationMapper
+						.fromConversationToDetailDto(conversation);
+				conversationDetailDto.setParticipantsDetails(getGroupMembers(conversationId));
+				messageNotifier.notifyConversationUpdate(conversationDetailDto);
+				
+				
 			}
 			if (conversation.getAdmins().contains(userPhone)) {
 				conversation.getAdmins().remove(userPhone);
@@ -589,6 +607,9 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			}
 			if (conversation.getConversationImgUrl() != null) { awsService.deleteFromS3(conversation.getConversationImgUrl()); }
 			conversationRepository.deleteById(conversationId);
+//			messageNotifier.notifyRemoveConversation(conversation.getId());
+
+			
 			
 		} else {
 			throw new RuntimeException(
@@ -681,9 +702,23 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		} else if (!isAdmin && admins.contains(targetUserId)) {
 			admins.remove(targetUserId);
 		}
+		else {
+			throw new RuntimeException("User %s is already %s in conversation %s".formatted(targetUserId,
+					isAdmin ? "admin" : "not admin", conversationId));
+		}
 		conversation.setAdmins(admins);
 		conversation.setUpdatedAt(LocalDateTime.now());
 		conversationRepository.save(conversation);
+		
+//		temporary
+		ConversationDetailDto conversationDetailDto = conversationMapper
+				.fromConversationToDetailDto(conversation);
+		conversationDetailDto.setParticipantsDetails(getGroupMembers(conversationId));
+		conversationDetailDto.setMessageDetails(messageRepository.findMessagesByConversationId(conversationId)
+				.stream().map(messageMapper::toMessageResponseDto)
+				.toList());
+		conversationDetailDto.setUpdatedAt(conversation.getUpdatedAt());
+		messageNotifier.notifyConversationUpdate(conversationDetailDto);
 		// messageNotifier.notifyGroupEvent(conversationId, "admin_updated",
 		// List.of(targetUserId, String.valueOf(isAdmin)));
 		log.info(
@@ -764,16 +799,36 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			log.warn("Group conversation {} not found", conversationId);
 			throw new IllegalArgumentException("Group conversation not found");
 		}
-
+		
 		List<String> membersId = conversation.getParticipants();
 		List<MemberDto> memberDtos = membersId.stream()
 				.map(userId -> userRepository.findByPhone(userId)).map(user -> {
 					MemberDto memberDto = userMapper.toMemberDto(user);
+					
+					log.info("MemberDto: {}", memberDto);
+					
 					memberDto.setAdmin(conversation.getAdmins()
-							.contains(memberDto.getPhoneNumber()));
-					memberDto.setLeader(conversation.getLeader() == user.getPhoneNumber());
+							.contains(memberDto.getPhoneNumber().toLowerCase()));
+					
+					memberDto.setLeader(conversation.getLeader().equalsIgnoreCase(user.getPhoneNumber()));
 					return memberDto;
-				}).toList();
+				})
+				.sorted((m1, m2) -> {
+					if (m1.isLeader() && !m2.isLeader()) {
+						return -1;
+					} else if (!m1.isLeader() && m2.isLeader()) {
+						return 1;
+					} else {
+						if (m1.isAdmin() && !m2.isAdmin()) {
+							return -1;
+						} else if (!m1.isAdmin() && m2.isAdmin()) {
+							return 1;
+						} else {
+							return m1.getName().compareTo(m2.getName());
+						}
+					}
+				})
+				.toList();
 		return memberDtos;
 	}
 }

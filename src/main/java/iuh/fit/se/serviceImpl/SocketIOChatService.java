@@ -24,6 +24,7 @@ import iuh.fit.se.service.CallService;
 import iuh.fit.se.service.ConversationService;
 import iuh.fit.se.service.MessageNotifier;
 import iuh.fit.se.service.MessageService;
+import iuh.fit.se.service.UserService;
 import iuh.fit.se.util.JwtUtils;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -43,6 +44,7 @@ public class SocketIOChatService {
 	private final JwtUtils jwtUtils;
 	private final CallService callService;
 	private final MessageService messageService;
+	private final UserService userService;
 	private final SocketIOCallService socketIOCallService;
 	
 	@PostConstruct
@@ -81,6 +83,7 @@ public class SocketIOChatService {
 
 					// Gửi unread_counts
 					client.sendEvent("unread_counts", unreadCountMap);
+					userService.updateUserStatus(username, true);
 
 				}, () -> {
 					log.error("User not found: {}", username);
@@ -101,6 +104,7 @@ public class SocketIOChatService {
 				log.info("Client disconnected: {} - {}", client.getSessionId(),
 						username);
 			}
+			userService.updateUserStatus(username, false);
 			messageNotifier.removeClient(username);
 		});
 

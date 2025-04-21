@@ -26,4 +26,5 @@ public interface MessageNotifier {
     void notifyNewLeader(String conversationId, String memberPhone);
     void notifyMemberLeft(String conversationId, String memberPhone);
     void notifyGroupEvent(String conversationId, String eventType, List<String> data);
+    void notifyConversationUpdate(ConversationDetailDto conversationDetail);
 }

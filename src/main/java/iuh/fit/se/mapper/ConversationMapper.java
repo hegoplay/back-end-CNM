@@ -31,7 +31,6 @@ public abstract class ConversationMapper {
 
    
 	public abstract ConversationDto fromConversationToDto(Conversation user);
-
 	
 	@Mapping(target = "messageDetails", ignore = true)
 	public abstract ConversationDetailDto fromConversationToDetailDto(Conversation user);
