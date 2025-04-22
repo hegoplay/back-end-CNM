@@ -104,6 +104,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			log.info("Transaction completed successfully");
 			ConversationDto dto = conversationMapper
 					.fromConversationToDto(conversation);
+			redefineConversationNameAndImgUrl(dto, userPhone);
 			messageNotifier.notifyNewConversation(dto,
 					userPhone);
 			messageNotifier.notifyNewConversation(dto,
@@ -481,12 +482,15 @@ public class ConversationServiceAWSImpl implements ConversationService {
 					"No valid members were added to the group");
 		}
 
+		conversation.setUpdatedAt(LocalDateTime.now());
 		conversationRepository.save(conversation);
-		for (String memberPhone : addedMembers) {
-			messageNotifier.notifyMemberAdded(conversationId, memberPhone);
-			// messageNotifier.notifyNewConversation(conversationDetailDto,
-			// memberPhone);
-		}
+		ConversationDetailDto dto = convertToConversationDetailDto(conversation);
+//		for (String memberPhone : addedMembers) {
+//			messageNotifier.notifyMemberAdded(conversationId, memberPhone);
+//			// messageNotifier.notifyNewConversation(conversationDetailDto,
+//			// memberPhone);
+//		}
+		messageNotifier.notifyConversationUpdate(dto);
 	}
 
 	public void removeMemberFromGroup(String conversationId,
@@ -753,6 +757,8 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		}
 		conversation.setUpdatedAt(LocalDateTime.now());
 		conversationRepository.save(conversation);
+		ConversationDetailDto dto = convertToConversationDetailDto(conversation);
+		messageNotifier.notifyConversationUpdate(dto);
 		// messageNotifier.notifyGroupEvent(conversationId,
 		// "group_info_updated",
 		// List.of(conversationName, conversationImgUrl));
@@ -830,5 +836,16 @@ public class ConversationServiceAWSImpl implements ConversationService {
 				})
 				.toList();
 		return memberDtos;
+	}
+	private ConversationDetailDto convertToConversationDetailDto(
+			Conversation conversation) {
+		ConversationDetailDto conversationDetailDto = conversationMapper
+				.fromConversationToDetailDto(conversation);
+		conversationDetailDto.setParticipantsDetails(getGroupMembers(conversation.getId()));
+		conversationDetailDto.setMessageDetails(messageRepository.findMessagesByConversationId(conversation.getId())
+				.stream().map(messageMapper::toMessageResponseDto)
+				.toList());
+		conversationDetailDto.setUpdatedAt(conversation.getUpdatedAt());
+		return conversationDetailDto;
 	}
 }

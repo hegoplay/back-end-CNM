@@ -235,7 +235,8 @@ public class ConversationController {
 		try {
 			String jwt = authHeader.substring(7);
 			String phone = jwtUtils.getPhoneFromToken(jwt);
-			log.info("Creating group: userId={}, name={}, memberIds={}", phone, name, memberIdsJson);
+			log.info("Creating group: userId={}, name={}, memberIds={}, baseImg= {}", phone, name, memberIdsJson, baseImg.getOriginalFilename());
+			
 			List<String> memberIds = parseMemberIds(memberIdsJson);
 			memberIds.stream().anyMatch(id -> !userService.isExistPhone(id));
 			CreateGroupImgDto request = CreateGroupImgDto.builder().conversationName(name).conversationImgUrl(baseImg).participants(memberIds)
