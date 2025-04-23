@@ -81,9 +81,6 @@ public class MessageServiceAWSImpl implements MessageService {
     @UpdateConversation
     public MessageResponseDTO sendCallEventMessage(MessageRequestDTO request) {
         validateMessageType(request, MessageType.CALL);
-        if (request.getCallEvent() == null) {
-            throw new IllegalArgumentException("Call event data is required");
-        }
         Message message = createAndSaveMessage(request);
         notifyParticipants(message);
         return messageMapper.toMessageResponseDto(message);
@@ -98,7 +95,8 @@ public class MessageServiceAWSImpl implements MessageService {
         if (!message.getSenderId().equals(userId)) {
             throw new RuntimeException("Only sender can recall message");
         }
-
+//        thêm setcontent về null 
+        
         message.setRecalled(true);
         messageRepository.save(message);
 //      xóa media hoặc file đính kèm
@@ -106,6 +104,7 @@ public class MessageServiceAWSImpl implements MessageService {
 			awsService.deleteFromS3PrefixCloudFront(message.getContent());
 		}
         
+        message.setContent(null);
         // Sử dụng MessageNotifier thay vì SocketIOService trực tiếp
         messageNotifier.notifyMessageRecalled(message.getConversationId(), messageId);
         
@@ -172,6 +171,8 @@ public class MessageServiceAWSImpl implements MessageService {
     private Message createAndSaveMessage(MessageRequestDTO request) {
         validateMessageRequest(request);
         
+        log.info("Creating message: {}", request);
+        
         Message message = messageMapper.fromMessageRequestDto(request);
         
         // Set additional fields not mapped by MapStruct
@@ -179,8 +180,15 @@ public class MessageServiceAWSImpl implements MessageService {
             message.setId(UUID.randomUUID().toString());
         }
         message.setCreatedAt(LocalDateTime.now());
-        message.setReactions(Optional.ofNullable(message.getReactions()).orElse(new ArrayList<>()));
-        message.setSeenBy(Optional.ofNullable(message.getSeenBy()).orElse(new ArrayList<>()));
+        
+        message.setReactions(new ArrayList<>());
+        
+        List<String> seenBy = new ArrayList<>();
+        if (request.getSenderId() != null) {
+			seenBy.add(request.getSenderId());
+		}
+        
+        message.setSeenBy(seenBy);
         message.setRecalled(false);
 
         messageRepository.save(message);
@@ -245,6 +253,33 @@ public class MessageServiceAWSImpl implements MessageService {
 		return messageMapper.toMessageResponseDto(message);
 		
 	
+	}
+
+	@Override
+	public void deleteConversationMessages(String conversationId) {
+		// TODO Auto-generated method stub
+		
+		
+		// Lấy danh sách tin nhắn trong conversation
+		List<Message> messages = messageRepository.findMessagesByConversationId(conversationId);
+		if (messages.isEmpty()) {
+			return; // Không có tin nhắn nào để xóa
+		}
+		// Xóa từng tin nhắn
+		for (Message message : messages) {
+			if ((message.getType() == MessageType.MEDIA || message.getType() == MessageType.FILE) && !message.isRecalled()) {
+				awsService.deleteFromS3PrefixCloudFront(message.getContent());
+			}
+			messageRepository.deleteMessage(message.getId());
+		}
+		// Xóa tin nhắn trong conversation
+		Conversation conversation = conversationRepository.findById(conversationId);
+		if (conversation != null) {
+			conversation.setMessages(new ArrayList<>());
+			conversationRepository.save(conversation);
+		}
+		
+		messageNotifier.notifyClearConversation(conversationId);
 	}
 
 }

@@ -1,10 +1,12 @@
 package iuh.fit.se;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.TimeZone;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+
+import lombok.extern.slf4j.Slf4j;
 
 @SpringBootApplication
 @Slf4j
@@ -13,5 +15,7 @@ public class BackendCmnApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(BackendCmnApplication.class, args);
+		// Đặt múi giờ mặc định là GMT+7 (Asia/Ho Chi Minh)
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
 	}
 }

@@ -25,7 +25,7 @@ public interface UserService {
 	
 	UserResponseDto updateUserInfo(String phone, UserUpdateRequestJSON request);
 	
-	void updateUserStatus(String phone, String status);
+	void updateUserStatus(String phone, boolean isOnline);
 	
 	void deleteUser(String phone);
 	
@@ -38,4 +38,6 @@ public interface UserService {
 	List<UserResponseDto> getFriends(String phone);
 
 	void acceptRequest(String phone, String friendPhone);
+	
+	void updateCallStatus(String phone, String callId);
 }

@@ -134,6 +134,16 @@ public class MessageController {
         return ResponseEntity.ok(messageService.sendCallEventMessage(request));
     }
 
+    @DeleteMapping("/conversation/{conversationId}")
+    public ResponseEntity<Void> deleteConversationMessages(
+    		@RequestHeader("Authorization") String authHeader,
+    		@PathVariable String conversationId) {
+    	String phone = getCurrentUserPhone(authHeader);
+    	log.info("Xóa tất cả tin nhắn trong cuộc trò chuyện: {}", conversationId);
+    	messageService.deleteConversationMessages(conversationId);
+    	
+    	return ResponseEntity.ok().build();
+    }
     // Thu hồi tin nhắn
     @DeleteMapping("/{messageId}")
     public ResponseEntity<Void> recallMessage(
@@ -165,6 +175,7 @@ public class MessageController {
         
         return ResponseEntity.ok(messageService.getMessagesByConversation(conversationId));
     }
+    
 
     
 }

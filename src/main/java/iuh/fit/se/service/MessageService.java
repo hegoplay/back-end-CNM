@@ -19,6 +19,7 @@ public interface MessageService {
 	MessageResponseDTO sendCallEventMessage(MessageRequestDTO request);
 //	MessageResponseDTO sendLocationMessage(MessageRequestDTO request);
 	MessageResponseDTO markMessageAsRead(String messageId, String userId);
+	void deleteConversationMessages(String conversationId);
 	
 	
 //	List<MessageResponseDTO> getMessagesByUser(String userId);

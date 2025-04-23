@@ -36,8 +36,6 @@ public class UserRepositoryDynamoDBImpl implements UserRepository {
 //	    if (!phone.startsWith("+")) {
 //	        phone = "+" + phone;
 //	    }
-	    log.info("Checking if user exists with phone: {}", phone);
-
 	    boolean exists = existsByPhone(phone);
 	    if (!exists) {
 	        log.error("User with phone {} does not exist in the database", phone);
@@ -63,17 +61,16 @@ public class UserRepositoryDynamoDBImpl implements UserRepository {
 
 	@Override
 	public boolean existsByPhone(String phone) {
-		// TODO Auto-generated method stub
 		GetItemRequest getItemRequest = GetItemRequest.builder().tableName("users")
 				.key(Map.of("phoneNumber", AttributeValue.builder().s(phone).build())).consistentRead(true).build();
 
 		GetItemResponse response = dynamoDbClient.getItem(getItemRequest);
 		
 		///nhớ xoá
-		log.info("Checking phone number: '{}'", phone);
+//		log.info("Checking response '{}'", response);
 
 		// Nếu item tồn tại, map sẽ không rỗng
-		return !response.item().isEmpty();
+		return response.hasItem();
 	}
 
 	@Override

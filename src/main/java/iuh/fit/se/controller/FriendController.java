@@ -1,5 +1,6 @@
 package iuh.fit.se.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import iuh.fit.se.model.User;
 import iuh.fit.se.model.dto.UserResponseDto;
 import iuh.fit.se.model.dto.friend.SendFriendRequestDto;
 import iuh.fit.se.service.ConversationService;
@@ -162,26 +164,59 @@ public class FriendController {
 	}
 
 	// chấp nhận lời mời kết bạn
+//	@PostMapping("/accept-request")
+//	public ResponseEntity<String> acceptFriendRequest(
+//			@RequestHeader("Authorization") String authorizationHeader,
+//			@RequestParam String senderPhoneNumber) {
+//		try {
+//			String receiverPhoneNumber = extractPhoneNumberFromToken(
+//					authorizationHeader);
+//			senderPhoneNumber = FormatUtils.formatPhoneNumber(senderPhoneNumber);
+//			log.info("User {} is accepting friend request from {}",
+//					receiverPhoneNumber, senderPhoneNumber);
+//			friendService.acceptFriendRequest(receiverPhoneNumber,
+//					senderPhoneNumber);
+//			
+//			conversationService.createFriendConversation(receiverPhoneNumber,
+//					senderPhoneNumber);
+//			return ResponseEntity.ok("Friend request accepted successfully");
+//		} catch (Exception e) {
+//			log.error("Error accepting friend request: {}", e.getMessage());
+//			return ResponseEntity.badRequest().body(e.getMessage());
+//		}
+//	}
+	
 	@PostMapping("/accept-request")
 	public ResponseEntity<String> acceptFriendRequest(
-			@RequestHeader("Authorization") String authorizationHeader,
-			@RequestParam String senderPhoneNumber) {
-		try {
-			String receiverPhoneNumber = extractPhoneNumberFromToken(
-					authorizationHeader);
-			senderPhoneNumber = FormatUtils.formatPhoneNumber(senderPhoneNumber);
-			log.info("User {} is accepting friend request from {}",
-					receiverPhoneNumber, senderPhoneNumber);
-			friendService.acceptFriendRequest(receiverPhoneNumber,
-					senderPhoneNumber);
-			
-			conversationService.createFriendConversation(receiverPhoneNumber,
-					senderPhoneNumber);
-			return ResponseEntity.ok("Friend request accepted successfully");
-		} catch (Exception e) {
-			log.error("Error accepting friend request: {}", e.getMessage());
-			return ResponseEntity.badRequest().body(e.getMessage());
-		}
+	        @RequestHeader("Authorization") String authorizationHeader,
+	        @RequestParam String senderPhoneNumber) {
+	    try {
+	        String receiverPhoneNumber = extractPhoneNumberFromToken(authorizationHeader);
+	        senderPhoneNumber = FormatUtils.formatPhoneNumber(senderPhoneNumber);
+	        log.info("User {} is accepting friend request from {}", receiverPhoneNumber, senderPhoneNumber);
+
+	        // Lấy User cho receiver từ token
+	        String jwt = authorizationHeader.substring(7);
+	        User receiver = userService.getUserFromToken(jwt);
+	        
+	        // Kiểm tra và khởi tạo conversations cho receiver
+	        if (receiver.getConversations() == null) {
+	            receiver.setConversations(new ArrayList<>());
+	            // Lưu thay đổi nếu cần (tùy thuộc vào cách UserService lưu User)
+	            // userService.save(receiver);
+	        }
+
+	        // Gọi FriendService để chấp nhận lời mời
+	        friendService.acceptFriendRequest(receiverPhoneNumber, senderPhoneNumber);
+
+	        // Gọi ConversationService để tạo hội thoại
+	        conversationService.createFriendConversation(receiverPhoneNumber, senderPhoneNumber);
+
+	        return ResponseEntity.ok("Friend request accepted successfully");
+	    } catch (Exception e) {
+	        log.error("Error accepting friend request: {}", e.getMessage(), e);
+	        return ResponseEntity.badRequest().body(e.getMessage());
+	    }
 	}
 
 	// Người gửi huỷ lời mời kết bạn
@@ -256,6 +291,8 @@ public class FriendController {
 		}
 	}
 
+
+	
 	@GetMapping("/get-friend-requests")
 	public ResponseEntity<List<UserResponseDto>> getFriendRequests(
 			@RequestHeader("Authorization") String authorizationHeader) {

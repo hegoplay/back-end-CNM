@@ -3,10 +3,10 @@ package iuh.fit.se.mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-import org.mapstruct.factory.Mappers;
 
 import iuh.fit.se.model.User;
 import iuh.fit.se.model.dto.UserResponseDto;
+import iuh.fit.se.model.dto.conversation.MemberDto;
 import iuh.fit.se.model.dto.user.UserUpdateRequest;
 import iuh.fit.se.model.dto.user.UserUpdateRequestJSON;
 
@@ -24,4 +24,8 @@ public interface UserMapper {
 	
 	@Mapping(target = "male", source = "isMale")  // Rõ ràng mapping boolean
 	User fromUserUpdateRequestJSONMapToUser(UserUpdateRequestJSON userRequest, @MappingTarget User user);
+	
+	@Mapping(target="isAdmin", ignore = true)
+	@Mapping(target="isOnline", source = "online")  // Rõ ràng mapping boolean
+	MemberDto toMemberDto(User user);
 }

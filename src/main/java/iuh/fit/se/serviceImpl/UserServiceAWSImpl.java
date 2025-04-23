@@ -203,12 +203,12 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 	}
 
 	@Override
-	public void updateUserStatus(String phone, String status) {
+	public void updateUserStatus(String phone, boolean isOnline) {
 		// TODO Auto-generated method stub
 		User user = userRepository.findByPhone(phone);
 		if (user != null) {
 			user.setOnline(true);
-			user.setStatus(status);
+			user.setStatus(isOnline ? "online" : "offline");
 			user.setUpdatedAt(LocalDateTime.now());
 			userRepository.save(user);
 		} else {
@@ -320,6 +320,18 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 
 		}
 
+	}
+
+	@Override
+	public void updateCallStatus(String phone, String callId) {
+		// TODO Auto-generated method stub
+		User user = userRepository.findByPhone(phone);
+		if (user == null) {
+			throw new RuntimeException("User not found");
+		}
+		user.setCurrentCallId(callId);
+		user.setUpdatedAt(LocalDateTime.now());
+		userRepository.save(user);
 	}
 
 }
