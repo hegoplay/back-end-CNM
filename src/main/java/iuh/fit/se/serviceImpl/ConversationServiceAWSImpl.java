@@ -597,6 +597,8 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			}
 			messageNotifier.notifyMemberLeft(conversationId,
 					member.getPhoneNumber());
+			ConversationDetailDto dto = convertToConversationDetailDto(conversation);
+			messageNotifier.notifyConversationUpdate(dto);
 		} else if (participantCount == 3) {
 			// Disband the group by removing the conversation from all
 			// participants' lists
@@ -611,6 +613,8 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			}
 			if (conversation.getConversationImgUrl() != null) { awsService.deleteFromS3(conversation.getConversationImgUrl()); }
 			conversationRepository.deleteById(conversationId);
+//			if (conversation.getConversationImgUrl() != null) { awsService.deleteFromS3(conversation.getConversationImgUrl()); }
+			messageNotifier.notifyRemoveConversation(conversationId);
 //			messageNotifier.notifyRemoveConversation(conversation.getId());
 
 			

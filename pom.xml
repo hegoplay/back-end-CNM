@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>iuh.fit.se</groupId>
 	<artifactId>backend-CMN</artifactId>
-	<version>0.1.0-SNAPSHOT</version>
+	<version>0.1.2-SNAPSHOT</version>
 	<name>backend-CMN</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
@@ -31,6 +31,7 @@
 		<jwt.version>0.12.6</jwt.version>
 		<aws.sdk.version>2.31.15</aws.sdk.version>
 		<org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
+		<okhttp3.version>4.12.0</okhttp3.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -130,6 +131,17 @@
 		    <groupId>com.fasterxml.jackson.datatype</groupId>
 		    <artifactId>jackson-datatype-jsr310</artifactId>
 		</dependency>	
+		
+		<dependency>
+	        <groupId>com.squareup.okhttp3</groupId>
+	        <artifactId>okhttp</artifactId>
+	        <version>${okhttp3.version}</version>
+	    </dependency>
+		 <dependency>
+	        <groupId>com.google.code.gson</groupId>
+	        <artifactId>gson</artifactId>
+	    </dependency>
+		
 		
 	</dependencies>
 

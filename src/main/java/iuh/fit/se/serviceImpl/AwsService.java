@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import iuh.fit.se.client.StringeeCallAction;
 import iuh.fit.se.model.dto.auth.RegisterRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,8 +40,9 @@ public class AwsService {
 
 	private final SnsClient snsClient;
 	private final S3Client s3Client;
-	private final DynamoDbClient dynamoDbClient;
-	private final PasswordEncoder passwordEncoder;
+//	private final DynamoDbClient dynamoDbClient;
+//	private final PasswordEncoder passwordEncoder;
+	private final StringeeCallAction stringeeCallAction;
 
 	private Map<String, String> otpStore = new HashMap<>(); // Lưu OTP tạm thời
 
@@ -61,6 +63,8 @@ public class AwsService {
 
 		try {
 //        	PublishResponse publish = snsClient.publish(request);
+			log.info("thong tin gui la phone: {}, otp: {}", phone, otp);
+			stringeeCallAction.sendOTPAction(phone, otp);
 //        	log.info("Gửi OTP thành công, messageId: {}", publish);
 		} catch (Exception e) {
 			log.error("Gửi OTP thất bại: {}", e.getMessage());
@@ -97,7 +101,7 @@ public class AwsService {
 		s3Client.putObject(putObjectRequest, convFile.toPath());
 		convFile.delete();
 
-		return "https://dc7q18mlu9m5b.cloudfront.net/" + fileName;
+		return cloudFrontUrl + fileName;
 	}
 
 //    Xóa item trên s3s3

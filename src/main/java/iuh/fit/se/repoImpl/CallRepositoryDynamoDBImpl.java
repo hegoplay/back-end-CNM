@@ -45,11 +45,7 @@ public class CallRepositoryDynamoDBImpl implements iuh.fit.se.repo.CallRepositor
 					.partitionValue(callId)
 					.build();
 			Call call = conversationTable.getItem(key);
-			if (call == null) {
-				log.info("Call with id {} not found", callId);
-				return Optional.empty();
-			}
-			return Optional.of(call);
+			return Optional.ofNullable(call);
 		} catch (Exception e) {
 			log.info("Error finding call with id {}: {}", callId, e.getMessage());
 			throw new RuntimeException("Failed to find call", e);

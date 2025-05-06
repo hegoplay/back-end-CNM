@@ -212,7 +212,14 @@ public class SocketIONotifier implements MessageNotifier {
 
     @Override
     public void notifyMemberLeft(String conversationId, String memberPhone) {
-        log.warn("Hasn't implement logic for notifyMemberLeft function");
+//        log.warn("Hasn't implement logic for notifyMemberLeft function");
+    	SocketIOClient client = userClientMap.get(memberPhone);
+		if (client != null) {
+			client.leaveRoom(conversationId);
+			client.sendEvent("delete_conversation", conversationId);
+		} else {
+			log.warn("No client found for userId: {}", memberPhone);
+		}
     }
 //    ???
     @Override
