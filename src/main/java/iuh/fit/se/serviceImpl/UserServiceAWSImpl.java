@@ -13,13 +13,14 @@ import iuh.fit.se.model.User;
 import iuh.fit.se.model.dto.UserResponseDto;
 import iuh.fit.se.model.dto.auth.LoginRequest;
 import iuh.fit.se.model.dto.auth.LoginResponse;
+import iuh.fit.se.model.dto.conversation.ConversationDto;
 import iuh.fit.se.model.dto.user.UserUpdateRequest;
 import iuh.fit.se.model.dto.user.UserUpdateRequestJSON;
 import iuh.fit.se.repo.UserRepository;
+import iuh.fit.se.service.ConversationService;
+import iuh.fit.se.service.FriendService;
 import iuh.fit.se.util.JwtUtils;
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
@@ -39,6 +40,8 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 
 	private final DynamoDbClient dynamoDbClient;
 	private final AwsService awsService;// private final DynamoDbEnhancedClient
+	private final ConversationService conversationService;
+	private final FriendService friendService;
 										// dynamoDbEnhancedClient;
 	// private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
 	private final PasswordEncoder passwordEncoder;
@@ -219,7 +222,48 @@ public class UserServiceAWSImpl implements iuh.fit.se.service.UserService {
 	@Override
 	public void deleteUser(String phone) {
 		// TODO Auto-generated method stub
+		User user = userRepository.findByPhone(phone);
+		if (user == null) {
+			throw new RuntimeException("User not found");
+		}
+		for (String friendPhone : user.getFriends()) {
+			friendService.removeFriend(friendPhone, phone);
+			conversationService.deleteFriendConversation(friendPhone, phone);
+		}
+		for (String pendingPhone : user.getPendings()) {
+			friendService.cancelFriendRequest(phone, pendingPhone);
+		}	
+		
+		user = userRepository.findByPhone(phone);
+		
+		for (String conversationId : user.getConversations()) {
+			ConversationDto conversation = conversationService
+					.getConversationById(conversationId);
+			if (conversation.getLeader() == phone) {
+				// Nếu người dùng là leader của nhóm, xóa nhóm
+				conversationService.deleteGroup(conversationId, phone);
+			} else {
+				// Nếu không, chỉ cần rời khỏi nhóm
+				String otherLeader = conversation.getParticipants().stream()
+						.filter(p -> !p.equals(phone))
+						.findFirst()
+						.orElse(null);
+				conversationService.leaveGroup(conversationId, phone, otherLeader);
+			}
+		}
+		
+		
+		// Xóa ảnh đại diện và ảnh bìa nếu có
+		
+		if (user.getBaseImg() != null) {
+			awsService.deleteFromS3PrefixCloudFront(user.getBaseImg());
+		}
+		if (user.getBackgroundImg() != null) {
+			awsService.deleteFromS3PrefixCloudFront(user.getBackgroundImg());
+		}
+		
 		userRepository.deleteByPhone(phone);
+		
 	}
 
 	@Override

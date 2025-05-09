@@ -1,20 +1,20 @@
 package iuh.fit.se.serviceImpl;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
 import iuh.fit.se.mapper.UserMapper;
 import iuh.fit.se.model.User;
 import iuh.fit.se.model.dto.UserResponseDto;
 import iuh.fit.se.model.dto.search.FindPeopleByNameKeywordResponse;
 import iuh.fit.se.repo.FriendRespository;
 import iuh.fit.se.repo.UserRepository;
+import iuh.fit.se.service.ConversationService;
 import iuh.fit.se.service.FriendService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +23,7 @@ public class FriendServiceAWSImpl implements FriendService {
 
 	// Injecting the repository
 	private final FriendRespository friendRepository;
+	
 	private final UserRepository userRepository;
 	private final UserMapper userMapper;
 
@@ -53,23 +54,26 @@ public class FriendServiceAWSImpl implements FriendService {
 	@Override
 	public FindPeopleByNameKeywordResponse findPeopleByNameKeyword(
 			String userPhone, String nameKeyword) {
+//		thêm bào bạn bè 
 		List<UserResponseDto> matchedFriends = new ArrayList<>();
 		List<FindPeopleByNameKeywordResponse.UserWithSharedGroups> matchedOthersWithSharedGroups = new ArrayList<>();
 		List<UserResponseDto> matchedContacted = new ArrayList<>();
 
 		List<String> friendPhoneList = userRepository.findByPhone(userPhone)
 				.getFriends();
+//		lấy số lượng bạn bè 
 		if (friendPhoneList != null) {
 			log.info("Found {} friends", friendPhoneList.size());
 		}
 
 		for (String friendPhone : friendPhoneList) {
+//			thông tin bạn bè 
 			User friendUser = userRepository.findByPhone(friendPhone);
 			if (friendUser == null) {
 				log.info("Friend null: {}", friendPhone);
 				continue;
 			}
-
+//tên của bạn có trong keyword 
 			if (friendUser.getName().contains(nameKeyword)) {
 				UserResponseDto friendInfo = userMapper
 						.toUserResponseDto(friendUser);
@@ -259,11 +263,26 @@ public class FriendServiceAWSImpl implements FriendService {
 		// TODO Auto-generated method stub
 		phone = formatPhoneNumber(phone);
 		User user = userRepository.findByPhone(phone);
+		List<String> removedFriendRequests = new ArrayList<>();	
 		if (user != null) {
 			List<UserResponseDto> friendRequests = user.getPendings().stream()
-					.map(friendPhone -> userMapper.toUserResponseDto(
-							userRepository.findByPhone(friendPhone)))
+					.map(friendPhone -> {
+						User friend = userRepository
+								.findByPhone(friendPhone);
+						if (friend != null) {
+							return userMapper.toUserResponseDto(friend);
+						} else {
+							removedFriendRequests.add(friendPhone);
+							return null;
+						}
+					})
+					.filter(friend -> friend != null)
 					.toList();
+			// Xóa các yêu cầu kết bạn đã bị xóa
+			if (!removedFriendRequests.isEmpty()) {
+				user.getPendings().removeAll(removedFriendRequests);
+				userRepository.save(user);
+			}
 			return friendRequests;
 		} else {
 			throw new RuntimeException("User not found");

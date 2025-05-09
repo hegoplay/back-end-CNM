@@ -18,7 +18,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.sns.SnsClient;
 
 @SpringBootTest
-class BackendCmnApplicationTests {
+class BackendCnmApplicationTests {
 
 	@MockitoBean
     private AwsConfig awsConfig; // Mock the awsConfig bean

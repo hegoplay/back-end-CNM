@@ -14,6 +14,7 @@ import com.corundumstudio.socketio.SocketIOServer;
 
 import iuh.fit.se.model.Call;
 import iuh.fit.se.model.User;
+import iuh.fit.se.model.dto.UserResponseDto;
 import iuh.fit.se.model.dto.call.StartCallDto;
 import iuh.fit.se.model.dto.conversation.ConversationDto;
 import iuh.fit.se.model.dto.message.MessageRequestDTO;
@@ -130,8 +131,11 @@ public class SocketIOChatService {
 							.callId(callId)
 							.build());
 					
+					
+					UserResponseDto userInfo = userService.getUserInfo(username);
+					
 					messageNotifier.sendCallInvitation(conversationId, "video",
-							username);
+							userInfo);
 
 
 					

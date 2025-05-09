@@ -163,29 +163,6 @@ public class FriendController {
 		}
 	}
 
-	// chấp nhận lời mời kết bạn
-//	@PostMapping("/accept-request")
-//	public ResponseEntity<String> acceptFriendRequest(
-//			@RequestHeader("Authorization") String authorizationHeader,
-//			@RequestParam String senderPhoneNumber) {
-//		try {
-//			String receiverPhoneNumber = extractPhoneNumberFromToken(
-//					authorizationHeader);
-//			senderPhoneNumber = FormatUtils.formatPhoneNumber(senderPhoneNumber);
-//			log.info("User {} is accepting friend request from {}",
-//					receiverPhoneNumber, senderPhoneNumber);
-//			friendService.acceptFriendRequest(receiverPhoneNumber,
-//					senderPhoneNumber);
-//			
-//			conversationService.createFriendConversation(receiverPhoneNumber,
-//					senderPhoneNumber);
-//			return ResponseEntity.ok("Friend request accepted successfully");
-//		} catch (Exception e) {
-//			log.error("Error accepting friend request: {}", e.getMessage());
-//			return ResponseEntity.badRequest().body(e.getMessage());
-//		}
-//	}
-	
 	@PostMapping("/accept-request")
 	public ResponseEntity<String> acceptFriendRequest(
 	        @RequestHeader("Authorization") String authorizationHeader,

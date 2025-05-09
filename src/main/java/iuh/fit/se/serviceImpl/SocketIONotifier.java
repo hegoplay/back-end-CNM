@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class SocketIONotifier implements MessageNotifier {
 	private final SocketIOServer socketIOServer;
-	private final UserService userService;
+//	private final UserService userService;
 	private final String NAMESPACE = "/chat";
 	// Mapping userId -> SocketIOClient
 	private final Map<String, SocketIOClient> userClientMap = new ConcurrentHashMap<>();
@@ -175,22 +175,22 @@ public class SocketIONotifier implements MessageNotifier {
 
 	@Override
 	public void sendCallInvitation(String conversationId, String callType,
-			String initiatorId) {
+			UserResponseDto initiator) {
 		log.info(
 				"Sending call invitation: conversationId = {}, callType = {}, initiatorId = {}",
-				conversationId, callType, initiatorId);
-		UserResponseDto userInfo = userService.getUserInfo(initiatorId);
-		if (userInfo == null) {
-			log.warn("User not found: {}", initiatorId);
-			return;
-		}
+				conversationId, callType, initiator);
+//		UserResponseDto userInfo = userService.getUserInfo(initiatorId);
+//		if (userInfo == null) {
+//			log.warn("User not found: {}", initiatorId);
+//			return;
+//		}
 		getChatNamespace().getRoomOperations(conversationId).getClients()
 				.stream()
-				.filter(client -> !client.get("username").equals(initiatorId))
+				.filter(client -> !client.get("username").equals(initiator.getPhoneNumber()))
 				.forEach(client -> {
 					client.sendEvent("call_invitation",
 							Map.of("conversationId", conversationId, "callType",
-									callType, "initiator", userInfo));
+									callType, "initiator", initiator));
 				});
 
 		log.info("Sent call invitation to conversation {}", conversationId);

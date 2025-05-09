@@ -107,6 +107,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 			redefineConversationNameAndImgUrl(dto, userPhone);
 			messageNotifier.notifyNewConversation(dto,
 					userPhone);
+			redefineConversationNameAndImgUrl(dto, friendPhone);
 			messageNotifier.notifyNewConversation(dto,
 					friendPhone);
 
