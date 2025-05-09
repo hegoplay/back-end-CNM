@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import iuh.fit.se.model.dto.message.MessageReactionDto;
 import iuh.fit.se.model.dto.message.MessageRequestDTO;
 import iuh.fit.se.model.dto.message.MessageResponseDTO;
 
@@ -20,6 +21,8 @@ public interface MessageService {
 //	MessageResponseDTO sendLocationMessage(MessageRequestDTO request);
 	MessageResponseDTO markMessageAsRead(String messageId, String userId);
 	void deleteConversationMessages(String conversationId);
+	
+	MessageReactionDto getMessageReactions(String messageId);
 	
 	
 //	List<MessageResponseDTO> getMessagesByUser(String userId);

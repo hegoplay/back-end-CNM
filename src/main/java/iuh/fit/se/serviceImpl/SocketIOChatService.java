@@ -14,10 +14,10 @@ import com.corundumstudio.socketio.SocketIOServer;
 
 import iuh.fit.se.model.Call;
 import iuh.fit.se.model.User;
-import iuh.fit.se.model.dto.UserResponseDto;
 import iuh.fit.se.model.dto.call.StartCallDto;
 import iuh.fit.se.model.dto.conversation.ConversationDto;
 import iuh.fit.se.model.dto.message.MessageRequestDTO;
+import iuh.fit.se.model.dto.user.UserResponseDto;
 import iuh.fit.se.model.enumObj.MessageType;
 import iuh.fit.se.repo.MessageRepository;
 import iuh.fit.se.repo.UserRepository;

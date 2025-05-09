@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import iuh.fit.se.model.dto.UserResponseDto;
+import iuh.fit.se.model.dto.user.UserResponseDto;
 import iuh.fit.se.model.dto.user.UserUpdateRequest;
 import iuh.fit.se.model.dto.user.UserUpdateRequestJSON;
 import iuh.fit.se.service.ConversationService;

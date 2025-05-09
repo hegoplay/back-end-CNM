@@ -7,8 +7,8 @@ import org.springframework.stereotype.Service;
 
 import iuh.fit.se.mapper.UserMapper;
 import iuh.fit.se.model.User;
-import iuh.fit.se.model.dto.UserResponseDto;
 import iuh.fit.se.model.dto.search.FindPeopleByNameKeywordResponse;
+import iuh.fit.se.model.dto.user.UserResponseDto;
 import iuh.fit.se.repo.FriendRespository;
 import iuh.fit.se.repo.UserRepository;
 import iuh.fit.se.service.ConversationService;

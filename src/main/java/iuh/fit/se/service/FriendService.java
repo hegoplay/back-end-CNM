@@ -1,6 +1,6 @@
 package iuh.fit.se.service;
-import iuh.fit.se.model.dto.UserResponseDto;
 import iuh.fit.se.model.dto.search.FindPeopleByNameKeywordResponse;
+import iuh.fit.se.model.dto.user.UserResponseDto;
 
 import java.util.List;
 

@@ -1,7 +1,13 @@
 package iuh.fit.se.serviceImpl;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -11,6 +17,8 @@ import iuh.fit.se.annotation.UpdateConversation;
 import iuh.fit.se.mapper.MessageMapper;
 import iuh.fit.se.model.Conversation;
 import iuh.fit.se.model.Message;
+import iuh.fit.se.model.dto.message.MessageReactionDto;
+import iuh.fit.se.model.dto.message.MessageReactionDto.UserReactionInfo;
 import iuh.fit.se.model.dto.message.MessageRequestDTO;
 import iuh.fit.se.model.dto.message.MessageResponseDTO;
 import iuh.fit.se.model.enumObj.MessageType;
@@ -19,6 +27,7 @@ import iuh.fit.se.repo.MessageRepository;
 import iuh.fit.se.service.ConversationService;
 import iuh.fit.se.service.MessageNotifier;
 import iuh.fit.se.service.MessageService;
+import iuh.fit.se.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +40,7 @@ public class MessageServiceAWSImpl implements MessageService {
     MessageRepository messageRepository;
     ConversationService conversationService;
     ConversationRepository conversationRepository;
+    UserService userService;
     MessageNotifier messageNotifier; // Thay thế SocketIOService bằng interface
     AwsService awsService;
     MessageMapper messageMapper;
@@ -280,6 +290,49 @@ public class MessageServiceAWSImpl implements MessageService {
 		}
 		
 		messageNotifier.notifyClearConversation(conversationId);
+	}
+
+	@Override
+	public MessageReactionDto getMessageReactions(String messageId) {
+		// TODO Auto-generated method stub
+		Message message = messageRepository.findById(messageId)
+				.orElseThrow(() -> new RuntimeException("Message not found"));
+		MessageReactionDto messageReactionDto = new MessageReactionDto();
+		messageReactionDto.setMessageId(message.getId());
+//		tính tổng số reaction của từng emoji
+		Map<String, Integer> totalUserReactions = new HashMap<>();
+//		// Tạo một Map để lưu trữ thông tin về các reaction
+		Map<String, List<UserReactionInfo>> reactions = new HashMap<>();
+		
+		Integer totalReactions = 0;
+		
+		message.getReactions().forEach(reaction ->{
+			Map<String, Integer> userReaction = new HashMap<>();
+			reaction.getUsers().forEach(userId -> {
+				userReaction.put(userId, userReaction.getOrDefault(userId, 0) + 1);	
+				totalUserReactions.put(userId, totalUserReactions.getOrDefault(userId, 0) + 1);
+			});
+			List<UserReactionInfo> userReactionInfos = userReaction.entrySet().stream()
+					.map(entry -> new UserReactionInfo(userService.getUserInfo(entry.getKey()), entry.getValue()))
+					.collect(Collectors.toList());
+			reactions.put(reaction.getEmoji(), userReactionInfos);
+		});
+		
+		for(int i = 0 ; i < message.getReactions().size(); i++) {
+			messageReactionDto.addReactionCount(message.getReactions().get(i).getEmoji(), 
+					message.getReactions().get(i).getUsers().size());
+			totalReactions += message.getReactions().get(i).getUsers().size();
+		}
+		
+		List<UserReactionInfo> userReactionInfos = totalUserReactions.entrySet().stream()
+				.map(entry -> new UserReactionInfo(userService.getUserInfo(entry.getKey()), entry.getValue()))
+				.collect(Collectors.toList());
+		reactions.put("all", userReactionInfos);
+		
+		messageReactionDto.setReactions(reactions);	
+		messageReactionDto.addReactionCount("all", totalReactions);
+		
+		return messageReactionDto;
 	}
 
 }

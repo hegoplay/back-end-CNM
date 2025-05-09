@@ -4,10 +4,10 @@ import java.util.List;
 
 import com.corundumstudio.socketio.SocketIOClient;
 
-import iuh.fit.se.model.dto.UserResponseDto;
 import iuh.fit.se.model.dto.conversation.ConversationDetailDto;
 import iuh.fit.se.model.dto.conversation.ConversationDto;
 import iuh.fit.se.model.dto.message.MessageResponseDTO;
+import iuh.fit.se.model.dto.user.UserResponseDto;
 
 public interface MessageNotifier {
 	

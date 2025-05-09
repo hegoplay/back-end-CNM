@@ -61,9 +61,6 @@ public interface ConversationService {
 
 	void joinGroup(String conversationId, String userPhone);
 	
-
-
-
 	void updateAdmin(String userId, String conversationId, String targetUserId, boolean isAdmin);
 
 	void updateGroupInfo(String userId, String conversationId, String conversationName, String conversationImgUrl);
@@ -72,4 +69,6 @@ public interface ConversationService {
 
 
 	List<MemberDto> getGroupMembers(String conversationId);
+	
+	
 }

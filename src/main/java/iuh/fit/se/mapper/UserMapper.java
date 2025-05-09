@@ -5,8 +5,8 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 import iuh.fit.se.model.User;
-import iuh.fit.se.model.dto.UserResponseDto;
 import iuh.fit.se.model.dto.conversation.MemberDto;
+import iuh.fit.se.model.dto.user.UserResponseDto;
 import iuh.fit.se.model.dto.user.UserUpdateRequest;
 import iuh.fit.se.model.dto.user.UserUpdateRequestJSON;
 

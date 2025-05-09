@@ -1,10 +1,11 @@
-package iuh.fit.se.model.dto;
+package iuh.fit.se.model.dto.user;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import iuh.fit.se.model.dto.CustomLocalDateTimeSerializer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

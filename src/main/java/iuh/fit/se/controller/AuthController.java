@@ -3,7 +3,6 @@ package iuh.fit.se.controller;
 import java.util.HashMap;
 import java.util.Map;
 
-import iuh.fit.se.model.dto.UserResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,6 +20,7 @@ import iuh.fit.se.model.dto.auth.LoginResponse;
 import iuh.fit.se.model.dto.auth.PhoneRequest;
 import iuh.fit.se.model.dto.auth.RegisterRequest;
 import iuh.fit.se.model.dto.auth.RegisterResponse;
+import iuh.fit.se.model.dto.user.UserResponseDto;
 import iuh.fit.se.service.UserService;
 import iuh.fit.se.serviceImpl.AwsService;
 import iuh.fit.se.util.JwtUtils;

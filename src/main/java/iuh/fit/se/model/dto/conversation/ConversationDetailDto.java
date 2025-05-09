@@ -9,8 +9,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import iuh.fit.se.model.Message;
 import iuh.fit.se.model.dto.CustomLocalDateTimeSerializer;
-import iuh.fit.se.model.dto.UserResponseDto;
 import iuh.fit.se.model.dto.message.MessageResponseDTO;
+import iuh.fit.se.model.dto.user.UserResponseDto;
 import iuh.fit.se.model.enumObj.ConversationType;
 import lombok.Builder;
 import lombok.Data;

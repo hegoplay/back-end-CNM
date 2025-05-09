@@ -10,10 +10,10 @@ import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIONamespace;
 import com.corundumstudio.socketio.SocketIOServer;
 
-import iuh.fit.se.model.dto.UserResponseDto;
 import iuh.fit.se.model.dto.conversation.ConversationDetailDto;
 import iuh.fit.se.model.dto.conversation.ConversationDto;
 import iuh.fit.se.model.dto.message.MessageResponseDTO;
+import iuh.fit.se.model.dto.user.UserResponseDto;
 import iuh.fit.se.service.MessageNotifier;
 import iuh.fit.se.service.UserService;
 import lombok.RequiredArgsConstructor;

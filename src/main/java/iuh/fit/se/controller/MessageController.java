@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import iuh.fit.se.model.dto.message.MessageReactionDto;
 import iuh.fit.se.model.dto.message.MessageRequestDTO;
 import iuh.fit.se.model.dto.message.MessageResponseDTO;
 import iuh.fit.se.model.dto.message.ReactionRequestDTO;
@@ -176,6 +177,12 @@ public class MessageController {
         return ResponseEntity.ok(messageService.getMessagesByConversation(conversationId));
     }
     
+    @GetMapping("/{messageId}/reactions")
+    public ResponseEntity<MessageReactionDto> getMessageReactions(
+			@RequestHeader("Authorization") String authHeader,
+			@PathVariable String messageId) {
+		return ResponseEntity.ok(messageService.getMessageReactions(messageId));
+	}
 
     
 }

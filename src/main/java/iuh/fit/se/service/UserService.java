@@ -3,10 +3,10 @@ package iuh.fit.se.service;
 import java.util.List;
 
 import iuh.fit.se.model.User;
-import iuh.fit.se.model.dto.UserResponseDto;
 import iuh.fit.se.model.dto.auth.LoginRequest;
 import iuh.fit.se.model.dto.auth.LoginResponse;
 import iuh.fit.se.model.dto.auth.RegisterRequest;
+import iuh.fit.se.model.dto.user.UserResponseDto;
 import iuh.fit.se.model.dto.user.UserUpdateRequest;
 import iuh.fit.se.model.dto.user.UserUpdateRequestJSON;
 

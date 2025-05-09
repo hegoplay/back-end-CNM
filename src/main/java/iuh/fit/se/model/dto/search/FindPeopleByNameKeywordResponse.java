@@ -1,6 +1,5 @@
 package iuh.fit.se.model.dto.search;
 
-import iuh.fit.se.model.dto.UserResponseDto;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -8,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 import java.util.List;
+
+import iuh.fit.se.model.dto.user.UserResponseDto;
 
 @Data
 @AllArgsConstructor

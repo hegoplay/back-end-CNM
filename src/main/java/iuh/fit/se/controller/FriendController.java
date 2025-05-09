@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import iuh.fit.se.model.dto.search.FindPeopleByNameKeywordResponse;
+import iuh.fit.se.model.dto.user.UserResponseDto;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import iuh.fit.se.model.User;
-import iuh.fit.se.model.dto.UserResponseDto;
 import iuh.fit.se.model.dto.friend.SendFriendRequestDto;
 import iuh.fit.se.service.ConversationService;
 import iuh.fit.se.service.FriendService;
