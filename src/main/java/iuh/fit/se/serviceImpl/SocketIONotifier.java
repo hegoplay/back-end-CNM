@@ -190,7 +190,7 @@ public class SocketIONotifier implements MessageNotifier {
 				.forEach(client -> {
 					client.sendEvent("call_invitation",
 							Map.of("conversationId", conversationId, "callType",
-									callType, "initiator", initiator));
+									callType, "initiator", initiator	));
 				});
 
 		log.info("Sent call invitation to conversation {}", conversationId);

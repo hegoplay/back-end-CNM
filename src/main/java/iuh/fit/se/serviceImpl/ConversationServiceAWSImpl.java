@@ -195,10 +195,8 @@ public class ConversationServiceAWSImpl implements ConversationService {
 					.toMessageResponseDto(message);
 			messages.add(messageResponseDTO);
 		}
-		if (conversation.getType() == ConversationType.GROUP) {
-			List<MemberDto> members = getGroupMembers(conversationId);
-			conversationDetailDto.setParticipantsDetails(members);
-		} 
+		List<MemberDto> members = getGroupMembers(conversationId);
+		conversationDetailDto.setParticipantsDetails(members);
 		
 		conversationDetailDto.setMessageDetails((messages));
 
@@ -805,8 +803,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 	public List<MemberDto> getGroupMembers(String conversationId) {
 		Conversation conversation = conversationRepository
 				.findById(conversationId);
-		if (conversation == null
-				|| conversation.getType() != ConversationType.GROUP) {
+		if (conversation == null) {
 			log.warn("Group conversation {} not found", conversationId);
 			throw new IllegalArgumentException("Group conversation not found");
 		}
