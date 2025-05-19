@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>iuh.fit.se</groupId>
 	<artifactId>backend-CMN</artifactId>
-	<version>0.1.3-SNAPSHOT</version>
+	<version>0.2.0-BETA</version>
 	<name>backend-CMN</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>

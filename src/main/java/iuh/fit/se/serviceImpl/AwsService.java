@@ -64,7 +64,7 @@ public class AwsService {
 		try {
 //        	PublishResponse publish = snsClient.publish(request);
 			log.info("thong tin gui la phone: {}, otp: {}", phone, otp);
-//			stringeeCallAction.sendOTPAction(phone, otp);
+			stringeeCallAction.sendOTPAction(phone, otp);
 //        	log.info("Gửi OTP thành công, messageId: {}", publish);
 		} catch (Exception e) {
 			log.error("Gửi OTP thất bại: {}", e.getMessage());
