@@ -6,6 +6,7 @@ import com.corundumstudio.socketio.SocketIOClient;
 
 import iuh.fit.se.model.dto.conversation.ConversationDetailDto;
 import iuh.fit.se.model.dto.conversation.ConversationDto;
+import iuh.fit.se.model.dto.conversation.MemberDto;
 import iuh.fit.se.model.dto.message.MessageResponseDTO;
 import iuh.fit.se.model.dto.user.UserResponseDto;
 
@@ -24,7 +25,7 @@ public interface MessageNotifier {
     void notifyRemoveConversation(String conversationId);
     void sendCallInvitation(String conversationId, String callType, UserResponseDto initiator);
     void notifyClearConversation(String conversationId);
-    void notifyMemberAdded(String conversationId, String memberPhone);
+    void notifyMemberAdded(String conversationId, MemberDto memberPhone);
     void notifyNewLeader(String conversationId, String memberPhone);
     void notifyMemberLeft(String conversationId, String memberPhone);
     void notifyGroupEvent(String conversationId, String eventType, List<String> data);

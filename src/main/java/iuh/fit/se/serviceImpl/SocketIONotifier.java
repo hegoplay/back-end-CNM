@@ -12,6 +12,7 @@ import com.corundumstudio.socketio.SocketIOServer;
 
 import iuh.fit.se.model.dto.conversation.ConversationDetailDto;
 import iuh.fit.se.model.dto.conversation.ConversationDto;
+import iuh.fit.se.model.dto.conversation.MemberDto;
 import iuh.fit.se.model.dto.message.MessageResponseDTO;
 import iuh.fit.se.model.dto.user.UserResponseDto;
 import iuh.fit.se.service.MessageNotifier;
@@ -198,10 +199,10 @@ public class SocketIONotifier implements MessageNotifier {
 
 
     @Override
-    public void notifyMemberAdded(String conversationId, String memberPhone) {
+    public void notifyMemberAdded(String conversationId, MemberDto member) {
 //        log.warn("Hasn't implement logic for notifyMemberAdded function");
         getChatNamespace().getRoomOperations(conversationId)
-				.sendEvent("member_added", Map.of("conversationId", conversationId, "memberPhone", memberPhone));
+				.sendEvent("member_added", Map.of("conversationId", conversationId, "member", member));
         
     }
 

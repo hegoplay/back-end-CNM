@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>iuh.fit.se</groupId>
 	<artifactId>backend-CNM</artifactId>
-	<version>0.2.7-BETA</version>
+	<version>0.2.8-BETA</version>
 	<name>backend-CNM</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>

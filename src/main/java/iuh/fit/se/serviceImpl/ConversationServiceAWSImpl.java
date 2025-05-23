@@ -484,11 +484,15 @@ public class ConversationServiceAWSImpl implements ConversationService {
 		conversation.setUpdatedAt(LocalDateTime.now());
 		conversationRepository.save(conversation);
 		ConversationDetailDto dto = convertToConversationDetailDto(conversation);
-//		for (String memberPhone : addedMembers) {
-//			messageNotifier.notifyMemberAdded(conversationId, memberPhone);
-//			// messageNotifier.notifyNewConversation(conversationDetailDto,
-//			// memberPhone);
-//		}
+		for (String memberPhone : addedMembers) {
+//			User member = userRepository.findByPhone(memberPhone);
+//			MemberDto memberDto = userMapper.toMemberDto(member);
+//			messageNotifier.notifyMemberAdded(conversationId, memberDto);
+			ConversationDto conversationDetailDto = conversationMapper
+					.fromConversationToDto(conversation);
+			 messageNotifier.notifyNewConversation(conversationDetailDto,
+			 memberPhone);
+		}
 		messageNotifier.notifyConversationUpdate(dto);
 	}
 
@@ -543,7 +547,7 @@ public class ConversationServiceAWSImpl implements ConversationService {
 				.stream().map(messageMapper::toMessageResponseDto)
 				.toList());
 		conversationDetailDto.setUpdatedAt(conversation.getUpdatedAt());
-//		messageNotifier.notifyMemberLeft(conversationId, memberPhone);
+		messageNotifier.notifyMemberLeft(conversationId, memberPhone);
 		messageNotifier.notifyConversationUpdate(conversationDetailDto);
 	}
 
