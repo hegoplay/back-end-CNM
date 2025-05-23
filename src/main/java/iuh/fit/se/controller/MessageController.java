@@ -6,17 +6,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import iuh.fit.se.mapper.MessageMapper;
+import iuh.fit.se.model.dto.message.MessageFileRequestDTO;
 import iuh.fit.se.model.dto.message.MessageReactionDto;
 import iuh.fit.se.model.dto.message.MessageRequestDTO;
 import iuh.fit.se.model.dto.message.MessageResponseDTO;
@@ -34,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 public class MessageController {
     private final MessageService messageService;
     private final UserService userService;
+    private final MessageMapper messageMapper;
     private final JwtUtils jwtUtils;
 
     private String getCurrentUserPhone(String authHeader) {
@@ -52,28 +53,11 @@ public class MessageController {
         return ResponseEntity.ok(messageService.sendTextMessage(request));
     }
 
-    // Gửi tin nhắn media (ảnh/video)
-/**
- * 
- * @param authHeader cái này là JWT
- * @param request là cái body của request, lúc gửi phải để theo định dang: {..., "request": {...}, mediaFile: file}
- * @param mediaFile là file đính kèm
- * @return
- */
-    /**
-     * 
-     * @param authHeader cái này là JWT
-     * @param request là cái body của request, lúc gửi phải để theo định dang: {..., "request": {...}, mediaFile: file}
-     * @param mediaFile là file đính kèm (ảnh/video/..)
-     * mediaType sẽ cần phải được chỉnh ở phía client
-     * @return
-     */
     // Gửi file đính kèm
-    @PostMapping(value = "/file", consumes = "multipart/form-data")
+    @PostMapping("/file")
     public ResponseEntity<MessageResponseDTO> sendFileMessage(
-            @RequestHeader(value = "Authorization") String authHeader,
-            @RequestPart(value = "request") MessageRequestDTO request,
-            @RequestPart(value = "file") MultipartFile file) {
+    		@RequestHeader("Authorization") String authHeader,
+    		@ModelAttribute MessageFileRequestDTO dto) {
         try {
             log.info("Bắt đầu xử lý yêu cầu gửi tệp");
 
@@ -84,12 +68,14 @@ public class MessageController {
             }
 
             // Kiểm tra file
-            if (file == null || file.isEmpty()) {
+            if (dto.getFile() == null || dto.getFile().isEmpty()) {
                 log.error("Tệp rỗng hoặc không hợp lệ");
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tệp rỗng hoặc không hợp lệ");
             }
-            log.info("File nhận được: name={}, size={}", file.getOriginalFilename(), file.getSize());
+            log.info("File nhận được: name={}, size={}", dto.getFile().getOriginalFilename(), dto.getFile().getSize());
 
+            MessageRequestDTO request = messageMapper.toMessageRequestDto(dto);
+            	
             // Kiểm tra request
             if (request == null || request.getConversationId() == null || request.getType() == null) {
                 log.error("Request không hợp lệ: {}", request);
@@ -111,7 +97,7 @@ public class MessageController {
             // Gán senderId và gọi service
             request.setSenderId(phone);
             log.info("Gửi tệp đính kèm với senderId: {}", phone);
-            MessageResponseDTO response = messageService.sendFileMessage(request, file);
+            MessageResponseDTO response = messageService.sendFileMessage(request, dto.getFile());
             
             log.info("Gửi tệp thành công: response={}", response);
 
@@ -124,6 +110,8 @@ public class MessageController {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi server không xác định", e);
         }
     }
+    
+
 
     // Gửi sự kiện cuộc gọi
     @PostMapping("/call-event")
@@ -177,8 +165,7 @@ public class MessageController {
         return ResponseEntity.ok(messageService.getMessagesByConversation(conversationId));
     }
     
-    @GetMapping("/{messageId}/reactions")
-    public ResponseEntity<MessageReactionDto> getMessageReactions(
+    @GetMapping("/{messageId}/reactions")    public ResponseEntity<MessageReactionDto> getMessageReactions(
 			@RequestHeader("Authorization") String authHeader,
 			@PathVariable String messageId) {
 		return ResponseEntity.ok(messageService.getMessageReactions(messageId));

@@ -6,10 +6,12 @@ import java.util.UUID;
 
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.factory.Mappers;
 
 import iuh.fit.se.model.Message;
+import iuh.fit.se.model.dto.message.MessageFileRequestDTO;
 import iuh.fit.se.model.dto.message.MessageRequestDTO;
 import iuh.fit.se.model.dto.message.MessageResponseDTO;
 
@@ -26,6 +28,8 @@ public interface MessageMapper {
 //	MessageResponseDTO.ReactionDTO reactionListToReactionDTOList(List<Message.Reaction> reactions);
 	
 	Message fromMessageResponseDtoToMessage(MessageResponseDTO userResponseDto, @MappingTarget Message message);
+	
+	MessageRequestDTO toMessageRequestDto(MessageFileRequestDTO message);
 	
 	@AfterMapping
     default void afterFromMessageRequestDto(MessageRequestDTO dto, @MappingTarget Message message) {

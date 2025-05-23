@@ -5,12 +5,12 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.4.5</version>
+		<version>3.5.0</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>iuh.fit.se</groupId>
 	<artifactId>backend-CNM</artifactId>
-	<version>0.2.1-BETA</version>
+	<version>0.2.7-BETA</version>
 	<name>backend-CNM</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>

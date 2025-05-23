@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,6 +29,8 @@ import iuh.fit.se.model.dto.conversation.CreateGroupRequest;
 import iuh.fit.se.model.dto.conversation.LeaveGroupRequestDto;
 import iuh.fit.se.model.dto.conversation.MemberDto;
 import iuh.fit.se.model.dto.conversation.UpdateAdminRequestDto;
+import iuh.fit.se.model.dto.message.MessageRequestDTO;
+import iuh.fit.se.model.dto.message.MessageResponseDTO;
 import iuh.fit.se.model.enumObj.ConversationType;
 import iuh.fit.se.service.ConversationService;
 import iuh.fit.se.service.MessageNotifier;
@@ -100,7 +103,7 @@ public class ConversationController {
 		conversationService.markAllMessagesAsRead(conversationId, phone);
 		return ResponseEntity.ok().build();
 	}
-//gộp xóa group và xóa bạn bè vào 1 chỗ
+	
 	@DeleteMapping("/{conversationId}")
 	public ResponseEntity<Void> deleteConversation(@PathVariable String conversationId,
 			@RequestHeader("Authorization") String authHeader) {
@@ -249,6 +252,8 @@ public class ConversationController {
 			throw new RuntimeException("Fail to create group: %s".formatted(e.getMessage()));
 		}
 	}
+	
+//	@PostMa
 
 	@GetMapping("/{conversationId}/members")
 	public ResponseEntity<List<MemberDto>> getGroupMembers(@PathVariable String conversationId,
