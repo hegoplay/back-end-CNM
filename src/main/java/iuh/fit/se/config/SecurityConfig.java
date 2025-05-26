@@ -1,7 +1,13 @@
 package iuh.fit.se.config;
 
+import java.util.Arrays;
+
+import org.apache.catalina.connector.Connector;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
+import org.springframework.boot.web.server.WebServerFactoryCustomizer;
+import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -16,8 +22,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
-import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -47,12 +51,12 @@ public class SecurityConfig {
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
+    PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList("*")); // Allow all origins
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")); // Allow all methods
@@ -67,7 +71,7 @@ public class SecurityConfig {
 
     // Optional: Keep WebMvcConfigurer if you want to configure CORS at MVC level (not strictly necessary with above)
     @Bean
-    public WebMvcConfigurer corsConfigurer() {
+    WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(org.springframework.web.servlet.config.annotation.CorsRegistry registry) {
@@ -78,5 +82,24 @@ public class SecurityConfig {
                         .allowCredentials(false);
             }
         };
+    }
+    
+    @Bean
+    WebServerFactoryCustomizer<ConfigurableServletWebServerFactory> webServerFactoryCustomizer() {
+        return factory -> {
+            if (factory instanceof TomcatServletWebServerFactory) {
+                ((TomcatServletWebServerFactory) factory)
+                    .addAdditionalTomcatConnectors(redirectConnector());
+            }
+        };
+    }
+
+    private Connector redirectConnector() {
+        Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
+        connector.setScheme("http");
+        connector.setPort(3001);
+        connector.setSecure(false);
+        connector.setRedirectPort(8443);
+        return connector;
     }
 }
