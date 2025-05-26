@@ -84,22 +84,22 @@ public class SecurityConfig {
         };
     }
     
-    @Bean
-    WebServerFactoryCustomizer<ConfigurableServletWebServerFactory> webServerFactoryCustomizer() {
-        return factory -> {
-            if (factory instanceof TomcatServletWebServerFactory) {
-                ((TomcatServletWebServerFactory) factory)
-                    .addAdditionalTomcatConnectors(redirectConnector());
-            }
-        };
-    }
-
-    private Connector redirectConnector() {
-        Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
-        connector.setScheme("http");
-        connector.setPort(3001);
-        connector.setSecure(false);
-        connector.setRedirectPort(8443);
-        return connector;
-    }
+//    @Bean
+//    WebServerFactoryCustomizer<ConfigurableServletWebServerFactory> webServerFactoryCustomizer() {
+//        return factory -> {
+//            if (factory instanceof TomcatServletWebServerFactory) {
+//                ((TomcatServletWebServerFactory) factory)
+//                    .addAdditionalTomcatConnectors(redirectConnector());
+//            }
+//        };
+//    }
+//
+//    private Connector redirectConnector() {
+//        Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
+//        connector.setScheme("http");
+//        connector.setPort(3001);
+//        connector.setSecure(false);
+//        connector.setRedirectPort(8443);
+//        return connector;
+//    }
 }
