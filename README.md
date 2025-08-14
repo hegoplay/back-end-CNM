@@ -16,3 +16,6 @@ JDK version require: 21
 
 ## Schema documentation
 - [table diagram](https://app.diagrams.net/#G1c_LLYKQCm8fAtndKE2qAG5WQNW3vvgvn#%7B%22pageId%22%3A%22j8mZVOvAGrMlXuVE_fvQ%22%7D)
+
+## Architect Structure 
+- <img width="597" height="422" alt="use case diagram-Page-4" src="https://github.com/user-attachments/assets/f8ef2c33-89a4-4705-a2f1-3a5522c43c9d" />
